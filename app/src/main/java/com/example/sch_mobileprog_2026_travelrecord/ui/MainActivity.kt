@@ -3,6 +3,7 @@ package com.example.sch_mobileprog_2026_travelrecord.ui
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.view.Menu
@@ -56,6 +57,20 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
+
+        // 시스템 뒤로가기 이벤트 수렴 제어 (OnBackPressedCallback)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding.bottomNavigation.selectedItemId == R.id.menu_map) {
+                    // 현재 지도 탭에 있다면 목록 탭으로 강제 이동 (앱 종료 방지)
+                    binding.bottomNavigation.selectedItemId = R.id.menu_list
+                } else {
+                    // 목록 탭에 있었다면 정상적으로 앱 종료 처리
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
 
         binding.fab.setOnClickListener { view ->
             // TODO: 추가 모드 EditActivity 진입 인텐트 연동 예정
