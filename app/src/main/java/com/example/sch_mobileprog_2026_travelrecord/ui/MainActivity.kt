@@ -1,4 +1,4 @@
-package com.example.sch_mobileprog_2026_travelrecord
+package com.example.sch_mobileprog_2026_travelrecord.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -7,6 +7,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.view.Menu
 import android.view.MenuItem
+import com.example.sch_mobileprog_2026_travelrecord.R
 import com.example.sch_mobileprog_2026_travelrecord.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
