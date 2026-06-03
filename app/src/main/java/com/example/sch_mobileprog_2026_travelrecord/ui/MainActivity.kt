@@ -7,12 +7,17 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.view.Menu
 import android.view.MenuItem
+import androidx.fragment.app.Fragment
 import com.example.sch_mobileprog_2026_travelrecord.R
 import com.example.sch_mobileprog_2026_travelrecord.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+
+    // 탭 구성을 위한 프래그먼트 인스턴스 생성
+    private val listFragment = TravelListFragment()
+    private val mapFragment = MapOverviewFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,8 +34,40 @@ class MainActivity : AppCompatActivity() {
         
         setSupportActionBar(binding.toolbar)
 
+        // 초기화 시점 (onCreate) - 프래그먼트 show/hide 구조 설계에 따른 add 및 초기 hide 상태 제어
+        supportFragmentManager.beginTransaction().apply {
+            add(R.id.fragment_container, listFragment, "LIST")
+            add(R.id.fragment_container, mapFragment, "MAP")
+            hide(mapFragment) // 기본 첫 화면은 리스트이므로 지도는 숨김
+            commit()
+        }
+
+        // 하단 탭 선택 시 화면 스위칭 리스너 설정
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.menu_list -> {
+                    switchFragment(listFragment, mapFragment)
+                    true
+                }
+                R.id.menu_map -> {
+                    switchFragment(mapFragment, listFragment)
+                    true
+                }
+                else -> false
+            }
+        }
+
         binding.fab.setOnClickListener { view ->
             // TODO: 추가 모드 EditActivity 진입 인텐트 연동 예정
+        }
+    }
+
+    // 탭 선택 시 트랜잭션 최적화를 위한 show / hide 유틸리티
+    private fun switchFragment(targetFragment: Fragment, hideFragment: Fragment) {
+        supportFragmentManager.beginTransaction().apply {
+            show(targetFragment)
+            hide(hideFragment)
+            commit()
         }
     }
 
