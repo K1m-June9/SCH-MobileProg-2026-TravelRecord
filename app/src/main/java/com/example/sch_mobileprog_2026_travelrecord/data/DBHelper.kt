@@ -147,4 +147,34 @@ class DBHelper private constructor(context: Context) :
         }
         records
     }
+
+    /**
+     * 특정 여행 기록을 수정함.
+     * SQL 인젝션 방지를 위해 ContentValues를 활용하며, 고유 키(no)가 존재할 때만 작동함.
+     * 비동기 스레드 분리 및 use 함수를 적용하여 데이터베이스 커넥션을 안전하게 정리함.
+     */
+    suspend fun updateRecord(record: TravelRecord): Int = withContext(Dispatchers.IO) {
+        if (record.no == null) return@withContext 0
+        writableDatabase.use { db ->
+            val values = ContentValues().apply {
+                put(COLUMN_PLACE, record.place)
+                put(COLUMN_VISIT_DATE, record.visitDate)
+                put(COLUMN_MEMO, record.memo)
+                put(COLUMN_PHOTO_URI, record.photoUri)
+                put(COLUMN_LATITUDE, record.latitude)
+                put(COLUMN_LONGITUDE, record.longitude)
+            }
+            db.update(TABLE_NAME, values, "`$COLUMN_NO` = ?", arrayOf(record.no.toString()))
+        }
+    }
+
+    /**
+     * 특정 여행 기록을 고유 키(no) 기준으로 삭제함.
+     * 비동기 스레드 분리 및 use 함수를 적용하여 데이터베이스 커넥션을 안전하게 정리함.
+     */
+    suspend fun deleteRecord(no: Int): Int = withContext(Dispatchers.IO) {
+        writableDatabase.use { db ->
+            db.delete(TABLE_NAME, "`$COLUMN_NO` = ?", arrayOf(no.toString()))
+        }
+    }
 }
