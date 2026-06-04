@@ -6,12 +6,42 @@
     android:layout_height="match_parent"
     tools:context=".ui.TravelListFragment">
 
-    <TextView
-        android:id="@+id/text_title"
+    <!-- 여행 기록 리스트 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:padding="8dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:listitem="@layout/item_travel_record" />
+
+    <!-- 백그라운드 DB 쿼리 연동 피드백용 프로그레스바 -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="여행 기록 목록 화면 (준비 중)"
-        android:textSize="18sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 빈 화면 예외 가이드용 텍스트뷰 -->
+    <TextView
+        android:id="@+id/text_empty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="기록된 여행 정보가 없습니다.\n우측 하단의 + 버튼을 눌러 기록을 남겨보세요!"
+        android:textSize="16sp"
+        android:textAlignment="center"
+        android:textColor="?android:attr/textColorSecondary"
+        android:lineSpacingMultiplier="1.2"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
