@@ -46,7 +46,7 @@ class DBHelper private constructor(context: Context) :
     override fun onCreate(db: SQLiteDatabase) {
         val createTableQuery = """
             CREATE TABLE $TABLE_NAME (
-                $COLUMN_NO INTEGER PRIMARY KEY AUTOINCREMENT,
+                `$COLUMN_NO` INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_PLACE TEXT NOT NULL,
                 $COLUMN_VISIT_DATE TEXT NOT NULL,
                 $COLUMN_MEMO TEXT,
