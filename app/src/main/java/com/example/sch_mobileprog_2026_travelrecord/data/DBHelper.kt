@@ -82,25 +82,24 @@ class DBHelper private constructor(context: Context) :
     /**
      * 새로운 여행 기록을 삽입함.
      * SQL 인젝션 방지를 위해 ContentValues를 활용하며, 코루틴 비동기(Dispatchers.IO) 안전하게 처리함.
-     * AGENT 지침에 따라 사용이 끝난 SQLiteDatabase 인스턴스를 .use로 확실히 닫음.
+     * 데이터베이스 커넥션 소멸 크래시 방지를 위해 db는 닫지 않고 싱글톤 수명주기에 위임함.
      */
     suspend fun insertRecord(record: TravelRecord): Long = withContext(Dispatchers.IO) {
-        writableDatabase.use { db ->
-            val values = ContentValues().apply {
-                put(COLUMN_PLACE, record.place)
-                put(COLUMN_VISIT_DATE, record.visitDate)
-                put(COLUMN_MEMO, record.memo)
-                put(COLUMN_PHOTO_URI, record.photoUri)
-                put(COLUMN_LATITUDE, record.latitude)
-                put(COLUMN_LONGITUDE, record.longitude)
-            }
-            db.insert(TABLE_NAME, null, values)
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_PLACE, record.place)
+            put(COLUMN_VISIT_DATE, record.visitDate)
+            put(COLUMN_MEMO, record.memo)
+            put(COLUMN_PHOTO_URI, record.photoUri)
+            put(COLUMN_LATITUDE, record.latitude)
+            put(COLUMN_LONGITUDE, record.longitude)
         }
+        db.insert(TABLE_NAME, null, values)
     }
 
     /**
      * 전체 여행 기록을 조회함.
-     * 자원 누수 방지를 위해 SQLiteDatabase와 Cursor에 각각 .use 확장 함수를 결합해 확실히 close를 보장함.
+     * 자원 누수 방지를 위해 Cursor에 .use 확장 함수를 결합해 확실히 close를 보장함.
      * 정렬 매개변수(SortOrder)에 맞춰 동적으로 정렬 쿼리를 비동기로 처리함.
      */
     suspend fun getAllRecords(sortOrder: SortOrder): List<TravelRecord> = withContext(Dispatchers.IO) {
@@ -111,38 +110,37 @@ class DBHelper private constructor(context: Context) :
             SortOrder.PLACE_ASC -> "$COLUMN_PLACE ASC"
         }
         val query = "SELECT * FROM $TABLE_NAME ORDER BY $orderBy"
+        val db = readableDatabase
 
-        readableDatabase.use { db ->
-            db.rawQuery(query, null).use { cursor ->
-                val colNo = cursor.getColumnIndex(COLUMN_NO)
-                val colPlace = cursor.getColumnIndex(COLUMN_PLACE)
-                val colVisitDate = cursor.getColumnIndex(COLUMN_VISIT_DATE)
-                val colMemo = cursor.getColumnIndex(COLUMN_MEMO)
-                val colPhotoUri = cursor.getColumnIndex(COLUMN_PHOTO_URI)
-                val colLatitude = cursor.getColumnIndex(COLUMN_LATITUDE)
-                val colLongitude = cursor.getColumnIndex(COLUMN_LONGITUDE)
+        db.rawQuery(query, null).use { cursor ->
+            val colNo = cursor.getColumnIndex(COLUMN_NO)
+            val colPlace = cursor.getColumnIndex(COLUMN_PLACE)
+            val colVisitDate = cursor.getColumnIndex(COLUMN_VISIT_DATE)
+            val colMemo = cursor.getColumnIndex(COLUMN_MEMO)
+            val colPhotoUri = cursor.getColumnIndex(COLUMN_PHOTO_URI)
+            val colLatitude = cursor.getColumnIndex(COLUMN_LATITUDE)
+            val colLongitude = cursor.getColumnIndex(COLUMN_LONGITUDE)
 
-                while (cursor.moveToNext()) {
-                    val no = if (colNo != -1) cursor.getInt(colNo) else null
-                    val place = if (colPlace != -1) cursor.getString(colPlace) else ""
-                    val visitDate = if (colVisitDate != -1) cursor.getString(colVisitDate) else ""
-                    val memo = if (colMemo != -1) cursor.getString(colMemo) else null
-                    val photoUri = if (colPhotoUri != -1) cursor.getString(colPhotoUri) else null
-                    val latitude = if (colLatitude != -1 && !cursor.isNull(colLatitude)) cursor.getDouble(colLatitude) else null
-                    val longitude = if (colLongitude != -1 && !cursor.isNull(colLongitude)) cursor.getDouble(colLongitude) else null
+            while (cursor.moveToNext()) {
+                val no = if (colNo != -1) cursor.getInt(colNo) else null
+                val place = if (colPlace != -1) cursor.getString(colPlace) else ""
+                val visitDate = if (colVisitDate != -1) cursor.getString(colVisitDate) else ""
+                val memo = if (colMemo != -1) cursor.getString(colMemo) else null
+                val photoUri = if (colPhotoUri != -1) cursor.getString(colPhotoUri) else null
+                val latitude = if (colLatitude != -1 && !cursor.isNull(colLatitude)) cursor.getDouble(colLatitude) else null
+                val longitude = if (colLongitude != -1 && !cursor.isNull(colLongitude)) cursor.getDouble(colLongitude) else null
 
-                    records.add(
-                        TravelRecord(
-                            no = no,
-                            place = place,
-                            visitDate = visitDate,
-                            memo = memo,
-                            photoUri = photoUri,
-                            latitude = latitude,
-                            longitude = longitude
-                        )
+                records.add(
+                    TravelRecord(
+                        no = no,
+                        place = place,
+                        visitDate = visitDate,
+                        memo = memo,
+                        photoUri = photoUri,
+                        latitude = latitude,
+                        longitude = longitude
                     )
-                }
+                )
             }
         }
         records
@@ -151,30 +149,28 @@ class DBHelper private constructor(context: Context) :
     /**
      * 특정 여행 기록을 수정함.
      * SQL 인젝션 방지를 위해 ContentValues를 활용하며, 고유 키(no)가 존재할 때만 작동함.
-     * 비동기 스레드 분리 및 use 함수를 적용하여 데이터베이스 커넥션을 안전하게 정리함.
+     * 비동기 스레드 분리를 적용하며, DB 커넥션은 닫지 않고 유지함.
      */
     suspend fun updateRecord(record: TravelRecord): Int = withContext(Dispatchers.IO) {
         if (record.no == null) return@withContext 0
-        writableDatabase.use { db ->
-            val values = ContentValues().apply {
-                put(COLUMN_PLACE, record.place)
-                put(COLUMN_VISIT_DATE, record.visitDate)
-                put(COLUMN_MEMO, record.memo)
-                put(COLUMN_PHOTO_URI, record.photoUri)
-                put(COLUMN_LATITUDE, record.latitude)
-                put(COLUMN_LONGITUDE, record.longitude)
-            }
-            db.update(TABLE_NAME, values, "`$COLUMN_NO` = ?", arrayOf(record.no.toString()))
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_PLACE, record.place)
+            put(COLUMN_VISIT_DATE, record.visitDate)
+            put(COLUMN_MEMO, record.memo)
+            put(COLUMN_PHOTO_URI, record.photoUri)
+            put(COLUMN_LATITUDE, record.latitude)
+            put(COLUMN_LONGITUDE, record.longitude)
         }
+        db.update(TABLE_NAME, values, "`$COLUMN_NO` = ?", arrayOf(record.no.toString()))
     }
 
     /**
      * 특정 여행 기록을 고유 키(no) 기준으로 삭제함.
-     * 비동기 스레드 분리 및 use 함수를 적용하여 데이터베이스 커넥션을 안전하게 정리함.
+     * 비동기 스레드 분리를 적용하며, DB 커넥션은 닫지 않고 유지함.
      */
     suspend fun deleteRecord(no: Int): Int = withContext(Dispatchers.IO) {
-        writableDatabase.use { db ->
-            db.delete(TABLE_NAME, "`$COLUMN_NO` = ?", arrayOf(no.toString()))
-        }
+        val db = writableDatabase
+        db.delete(TABLE_NAME, "`$COLUMN_NO` = ?", arrayOf(no.toString()))
     }
 }
