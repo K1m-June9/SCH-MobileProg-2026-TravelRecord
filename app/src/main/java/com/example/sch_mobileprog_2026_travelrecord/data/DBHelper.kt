@@ -1,8 +1,11 @@
 package com.example.sch_mobileprog_2026_travelrecord.data
 
+import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * SQLite 데이터베이스 생성 및 스키마 관리를 담당하는 DBHelper 클래스.
@@ -65,5 +68,83 @@ class DBHelper private constructor(context: Context) :
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
         onCreate(db)
+    }
+
+    /**
+     * 전체 조회 시 사용될 정렬 기준 정의
+     */
+    enum class SortOrder {
+        DATE_ASC,   // 날짜 오름차순 (과거순)
+        DATE_DESC,  // 날짜 내림차순 (최신순)
+        PLACE_ASC   // 여행지 가나다순
+    }
+
+    /**
+     * 새로운 여행 기록을 삽입함.
+     * SQL 인젝션 방지를 위해 ContentValues를 활용하며, 코루틴 비동기(Dispatchers.IO) 안전하게 처리함.
+     * AGENT 지침에 따라 사용이 끝난 SQLiteDatabase 인스턴스를 .use로 확실히 닫음.
+     */
+    suspend fun insertRecord(record: TravelRecord): Long = withContext(Dispatchers.IO) {
+        writableDatabase.use { db ->
+            val values = ContentValues().apply {
+                put(COLUMN_PLACE, record.place)
+                put(COLUMN_VISIT_DATE, record.visitDate)
+                put(COLUMN_MEMO, record.memo)
+                put(COLUMN_PHOTO_URI, record.photoUri)
+                put(COLUMN_LATITUDE, record.latitude)
+                put(COLUMN_LONGITUDE, record.longitude)
+            }
+            db.insert(TABLE_NAME, null, values)
+        }
+    }
+
+    /**
+     * 전체 여행 기록을 조회함.
+     * 자원 누수 방지를 위해 SQLiteDatabase와 Cursor에 각각 .use 확장 함수를 결합해 확실히 close를 보장함.
+     * 정렬 매개변수(SortOrder)에 맞춰 동적으로 정렬 쿼리를 비동기로 처리함.
+     */
+    suspend fun getAllRecords(sortOrder: SortOrder): List<TravelRecord> = withContext(Dispatchers.IO) {
+        val records = mutableListOf<TravelRecord>()
+        val orderBy = when (sortOrder) {
+            SortOrder.DATE_ASC -> "$COLUMN_VISIT_DATE ASC"
+            SortOrder.DATE_DESC -> "$COLUMN_VISIT_DATE DESC"
+            SortOrder.PLACE_ASC -> "$COLUMN_PLACE ASC"
+        }
+        val query = "SELECT * FROM $TABLE_NAME ORDER BY $orderBy"
+
+        readableDatabase.use { db ->
+            db.rawQuery(query, null).use { cursor ->
+                val colNo = cursor.getColumnIndex(COLUMN_NO)
+                val colPlace = cursor.getColumnIndex(COLUMN_PLACE)
+                val colVisitDate = cursor.getColumnIndex(COLUMN_VISIT_DATE)
+                val colMemo = cursor.getColumnIndex(COLUMN_MEMO)
+                val colPhotoUri = cursor.getColumnIndex(COLUMN_PHOTO_URI)
+                val colLatitude = cursor.getColumnIndex(COLUMN_LATITUDE)
+                val colLongitude = cursor.getColumnIndex(COLUMN_LONGITUDE)
+
+                while (cursor.moveToNext()) {
+                    val no = if (colNo != -1) cursor.getInt(colNo) else null
+                    val place = if (colPlace != -1) cursor.getString(colPlace) else ""
+                    val visitDate = if (colVisitDate != -1) cursor.getString(colVisitDate) else ""
+                    val memo = if (colMemo != -1) cursor.getString(colMemo) else null
+                    val photoUri = if (colPhotoUri != -1) cursor.getString(colPhotoUri) else null
+                    val latitude = if (colLatitude != -1 && !cursor.isNull(colLatitude)) cursor.getDouble(colLatitude) else null
+                    val longitude = if (colLongitude != -1 && !cursor.isNull(colLongitude)) cursor.getDouble(colLongitude) else null
+
+                    records.add(
+                        TravelRecord(
+                            no = no,
+                            place = place,
+                            visitDate = visitDate,
+                            memo = memo,
+                            photoUri = photoUri,
+                            latitude = latitude,
+                            longitude = longitude
+                        )
+                    )
+                }
+            }
+        }
+        records
     }
 }
