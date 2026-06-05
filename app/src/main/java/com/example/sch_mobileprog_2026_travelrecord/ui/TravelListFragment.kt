@@ -2,11 +2,13 @@ package com.example.sch_mobileprog_2026_travelrecord.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.sch_mobileprog_2026_travelrecord.R
 import com.example.sch_mobileprog_2026_travelrecord.data.DBHelper
 import com.example.sch_mobileprog_2026_travelrecord.data.TravelRecord
 import com.example.sch_mobileprog_2026_travelrecord.databinding.FragmentTravelListBinding
@@ -98,6 +100,28 @@ class TravelListFragment : Fragment() {
                 // 로딩바 제거
                 binding.progressBar.visibility = View.GONE
             }
+        }
+    }
+
+    /**
+     * 컨텍스트 메뉴 아이템('수정' 또는 '삭제') 클릭 시 콜백 이벤트 수신
+     */
+    override fun onContextItemSelected(item: MenuItem): Boolean {
+        // 어댑터로부터 롱클릭된 아이템의 고유 번호(no) 획득
+        val no = travelAdapter.longClickedNo ?: return super.onContextItemSelected(item)
+        
+        return when (item.itemId) {
+            R.id.menu_context_edit -> {
+                // TODO: 상세 화면(EditActivity) 수정 모드 인텐트 전환 예정 (DAY 4 연동)
+                Toast.makeText(requireContext(), "수정 선택: $no 번 기록", Toast.LENGTH_SHORT).show()
+                true
+            }
+            R.id.menu_context_delete -> {
+                // TODO: 삭제 경고 다이얼로그 호출 및 물리 파일 삭제 연동 예정 (Task 3.5 구현)
+                Toast.makeText(requireContext(), "삭제 선택: $no 번 기록", Toast.LENGTH_SHORT).show()
+                true
+            }
+            else -> super.onContextItemSelected(item)
         }
     }
 

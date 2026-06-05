@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 컨텍스트 메뉴용 고유 리소스 ID 선언 -->
+    <item name="menu_context_edit" type="id" />
+    <item name="menu_context_delete" type="id" />
+</resources>

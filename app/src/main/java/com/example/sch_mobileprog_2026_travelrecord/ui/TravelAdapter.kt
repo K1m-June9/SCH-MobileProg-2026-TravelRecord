@@ -4,7 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.view.ContextMenu
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView
@@ -21,10 +24,14 @@ import kotlinx.coroutines.withContext
  */
 class TravelAdapter(
     private val lifecycleScope: LifecycleCoroutineScope, // 이미지 비동기 로딩을 위한 코루틴 스코프 주입
-    private val onItemClick: (Int) -> Unit               // 항목 클릭 시 고유 ID(no)를 반환하는 콜백 람다
+    private val onItemClick: (Int) -> Unit               // 항목 클릭 시 고유 ID(no)를 반환하는 람다
 ) : RecyclerView.Adapter<TravelAdapter.TravelViewHolder>() {
 
     private var items = listOf<TravelRecord>()
+
+    // 컨텍스트 메뉴 선택 시 어떤 항목이 롱클릭되었는지 프래그먼트에 알려주는 멤버 변수
+    var longClickedNo: Int? = null
+        private set
 
     /**
      * 리스트 데이터를 갱신함.
@@ -51,9 +58,10 @@ class TravelAdapter(
 
     /**
      * 개별 항목의 뷰를 제어하고 바인딩하는 ViewHolder 내부 클래스.
+     * 시스템 롱클릭 컨텍스트 메뉴를 활성화하기 위해 OnCreateContextMenuListener를 구현함.
      */
     inner class TravelViewHolder(private val binding: ItemTravelRecordBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+        RecyclerView.ViewHolder(binding.root), View.OnCreateContextMenuListener {
 
         fun bind(item: TravelRecord) {
             binding.textPlace.text = item.place
@@ -63,6 +71,15 @@ class TravelAdapter(
             binding.root.setOnClickListener {
                 item.no?.let { no -> onItemClick(no) }
             }
+
+            // 롱클릭 시 롱클릭된 고유 ID(no)를 어댑터 멤버변수에 기록
+            binding.root.setOnLongClickListener {
+                longClickedNo = item.no
+                false // false를 반환해야 시스템에 롱클릭 이벤트를 전파하여 onCreateContextMenu를 트리거함
+            }
+
+            // 컨텍스트 메뉴 생성을 위한 리스너 결합
+            binding.root.setOnCreateContextMenuListener(this)
 
             val context = binding.root.context
 
@@ -80,6 +97,20 @@ class TravelAdapter(
                     }
                 }
             }
+        }
+
+        /**
+         * 아이템 뷰 롱클릭 시 호출되는 컨텍스트 메뉴 팝업 정의
+         */
+        override fun onCreateContextMenu(
+            menu: ContextMenu?,
+            v: View?,
+            menuInfo: ContextMenu.ContextMenuInfo?
+        ) {
+            menu?.setHeaderTitle("선택한 기록 관리")
+            // ids.xml에 정의해 둔 고유 리소스 ID를 연결하여 수정/삭제 아이템 삽입
+            menu?.add(Menu.NONE, R.id.menu_context_edit, Menu.NONE, "수정")
+            menu?.add(Menu.NONE, R.id.menu_context_delete, Menu.NONE, "삭제")
         }
     }
 
