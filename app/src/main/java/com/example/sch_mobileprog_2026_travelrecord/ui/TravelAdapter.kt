@@ -41,6 +41,23 @@ class TravelAdapter(
         notifyDataSetChanged()
     }
 
+    /**
+     * 현재 어댑터가 보관 중인 전체 여행 기록 리스트를 반환함.
+     */
+    fun getItems(): List<TravelRecord> = items
+
+    /**
+     * 특정 인덱스의 아이템을 삭제하고, 리사이클러뷰 삭제 애니메이션(notifyItemRemoved)을 부드럽게 실시간 반영함.
+     */
+    fun removeItem(position: Int) {
+        val mutableList = items.toMutableList()
+        if (position in 0 until mutableList.size) {
+            mutableList.removeAt(position)
+            this.items = mutableList
+            notifyItemRemoved(position)
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TravelViewHolder {
         val binding = ItemTravelRecordBinding.inflate(
             LayoutInflater.from(parent.context),

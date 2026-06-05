@@ -1,18 +1,23 @@
 package com.example.sch_mobileprog_2026_travelrecord.ui
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.sch_mobileprog_2026_travelrecord.R
 import com.example.sch_mobileprog_2026_travelrecord.data.DBHelper
 import com.example.sch_mobileprog_2026_travelrecord.data.TravelRecord
 import com.example.sch_mobileprog_2026_travelrecord.databinding.FragmentTravelListBinding
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class TravelListFragment : Fragment() {
 
@@ -117,11 +122,76 @@ class TravelListFragment : Fragment() {
                 true
             }
             R.id.menu_context_delete -> {
-                // TODO: 삭제 경고 다이얼로그 호출 및 물리 파일 삭제 연동 예정 (Task 3.5 구현)
-                Toast.makeText(requireContext(), "삭제 선택: $no 번 기록", Toast.LENGTH_SHORT).show()
+                // 경고 알림 팝업 소환
+                showDeleteDialog(no)
                 true
             }
             else -> super.onContextItemSelected(item)
+        }
+    }
+
+    /**
+     * 기록 삭제 전 경고 알림 다이얼로그를 표출함.
+     * 사용자가 '확인'을 누를 때에만 SQLite 데이터베이스 레코드와 단말기 내부 저장소의 물리적 이미지 파일을 동시 제거함.
+     */
+    private fun showDeleteDialog(no: Int) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("기록 삭제")
+            .setMessage("이 여행 기록을 삭제하시겠습니까?\n삭제된 데이터와 사진 파일은 영구히 복구할 수 없습니다.")
+            .setPositiveButton("확인") { _, _ ->
+                performDeleteRecord(no)
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    /**
+     * 실제 물리 이미지 파일 삭제 및 DB 행(Row) 삭제 연산을 비동기로 수행하고,
+     * notifyItemRemoved 애니메이션을 엮어 리사이클러뷰 화면을 실시간 업데이트함.
+     */
+    private fun performDeleteRecord(no: Int) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // 1단계: 어댑터 내 해당 데이터 검색
+                val items = travelAdapter.getItems()
+                val position = items.indexOfFirst { it.no == no }
+                if (position == -1) return@launch
+
+                val targetRecord = items[position]
+
+                // 2단계: 백그라운드 스레드에서 물리적 이미지 파일 안전하게 동반 소멸 처리 (AGENT 지침 준수)
+                if (!targetRecord.photoUri.isNullOrEmpty()) {
+                    withContext(Dispatchers.IO) {
+                        val uri = Uri.parse(targetRecord.photoUri)
+                        val file = if (uri.scheme == "file") {
+                            File(uri.path ?: "")
+                        } else {
+                            File(targetRecord.photoUri)
+                        }
+                        if (file.exists()) {
+                            file.delete()
+                        }
+                    }
+                }
+
+                // 3단계: SQLite 데이터베이스 내 DELETE 쿼리 비동기 수행
+                dbHelper.deleteRecord(no)
+
+                // 4단계: 리사이클러뷰 실시간 삭제 애니메이션(notifyItemRemoved) 트리거 및 상태 분기
+                travelAdapter.removeItem(position)
+
+                // 5단계: 만약 삭제 후 목록이 완전히 비었다면 가이드 텍스트 노출
+                if (travelAdapter.getItems().isEmpty()) {
+                    binding.recyclerView.visibility = View.GONE
+                    binding.textEmpty.visibility = View.VISIBLE
+                }
+
+                Toast.makeText(requireContext(), "기록이 정상적으로 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(requireContext(), "삭제 실패: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
