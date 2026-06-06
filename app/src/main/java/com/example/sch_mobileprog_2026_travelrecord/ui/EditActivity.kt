@@ -36,6 +36,11 @@ class EditActivity : AppCompatActivity() {
     // [A2 대안 A] 최종 선택된 사진의 임시 URI 보관 (저장 전까지 메모리에만 임시 적재)
     private var selectedImageUri: Uri? = null
 
+    // 기존 데이터 복원 및 수정을 위한 원본 백업 변수
+    private var originalPhotoUri: String? = null
+    private var originalLatitude: Double? = null
+    private var originalLongitude: Double? = null
+
     // 카메라 캡처용 임시 파일 및 URI 변수
     private var tempCameraFile: File? = null
     private var tempCameraUri: Uri? = null
@@ -105,8 +110,7 @@ class EditActivity : AppCompatActivity() {
         }
 
         binding.btnSave.setOnClickListener {
-            // TODO: 임시 보관된 URI를 filesDir로 영속 복사 후 DB에 CRUD 저장 처리 예정 (Task 4.4 연동)
-            Toast.makeText(this, "저장 기능 연동 예정", Toast.LENGTH_SHORT).show()
+            saveTravelRecord()
         }
 
         // 4단계: 갤러리 및 카메라 사진 호출 버튼 리스너 바인딩 (Task 4.3 연동)
@@ -129,6 +133,9 @@ class EditActivity : AppCompatActivity() {
                 binding.etPlace.setText(record.place)
                 binding.etVisitDate.setText(record.visitDate)
                 binding.etMemo.setText(record.memo ?: "")
+                originalPhotoUri = record.photoUri
+                originalLatitude = record.latitude
+                originalLongitude = record.longitude
 
                 // 이미지가 등록된 기록일 경우 저수준 최적화 디코더를 경유하여 비동기 렌더링
                 if (!record.photoUri.isNullOrEmpty()) {
@@ -207,6 +214,72 @@ class EditActivity : AppCompatActivity() {
             }
         }
         return inSampleSize
+    }
+
+    /**
+     * 입력 데이터를 검증하고 임시 선택 이미지를 영구 복사한 후 SQLite 데이터베이스에 최종 저장(추가/수정)함.
+     */
+    private fun saveTravelRecord() {
+        val place = binding.etPlace.text.toString().trim()
+        val visitDate = binding.etVisitDate.text.toString().trim()
+        val memo = binding.etMemo.text.toString().trim()
+
+        // 1단계: 필수 필드 무결성 검증
+        if (place.isEmpty()) {
+            Toast.makeText(this, "여행지명을 입력해 주세요.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (visitDate.isEmpty()) {
+            Toast.makeText(this, "방문 날짜를 선택해 주세요.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        lifecycleScope.launch {
+            try {
+                var finalPhotoUri: String? = originalPhotoUri
+
+                // 2단계: 신규 이미지가 선택되었거나 변경되었을 경우 내부 저장소로 물리 복사 실행
+                val currentUriString = selectedImageUri?.toString()
+                if (currentUriString != originalPhotoUri && selectedImageUri != null) {
+                    val copiedUri = com.example.sch_mobileprog_2026_travelrecord.util.FileUtil.copyUriToInternal(
+                        this@EditActivity,
+                        selectedImageUri!!
+                    )
+                    if (copiedUri != null) {
+                        finalPhotoUri = copiedUri
+                    } else {
+                        Toast.makeText(this@EditActivity, "이미지 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+                }
+
+                // 3단계: SQLite 저장용 TravelRecord 데이터 모델 조립
+                val record = com.example.sch_mobileprog_2026_travelrecord.data.TravelRecord(
+                    no = if (isEditMode) recordId else null,
+                    place = place,
+                    visitDate = visitDate,
+                    memo = if (memo.isNotEmpty()) memo else null,
+                    photoUri = finalPhotoUri,
+                    latitude = originalLatitude,
+                    longitude = originalLongitude
+                )
+
+                // 4단계: 모드 분기에 따라 SQLite DML 실행
+                if (isEditMode) {
+                    dbHelper.updateRecord(record)
+                    Toast.makeText(this@EditActivity, "여행 기록이 수정되었습니다.", Toast.LENGTH_SHORT).show()
+                } else {
+                    dbHelper.insertRecord(record)
+                    Toast.makeText(this@EditActivity, "여행 기록이 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                }
+
+                finish()
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this@EditActivity, "저장 실패: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     /**
