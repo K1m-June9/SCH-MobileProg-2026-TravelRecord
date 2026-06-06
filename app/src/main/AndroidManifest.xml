@@ -37,6 +37,16 @@
             android:name=".ui.EditActivity"
             android:exported="false"
             android:theme="@style/Theme.SCHMobileProg2026TravelRecord" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.sch_mobileprog_2026_travelrecord.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

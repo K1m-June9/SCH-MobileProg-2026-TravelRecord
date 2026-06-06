@@ -7,7 +7,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.sch_mobileprog_2026_travelrecord.R
 import com.example.sch_mobileprog_2026_travelrecord.data.DBHelper
@@ -15,6 +17,8 @@ import com.example.sch_mobileprog_2026_travelrecord.databinding.ActivityEditBind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.IOException
 import java.util.Calendar
 
 /**
@@ -28,6 +32,42 @@ class EditActivity : AppCompatActivity() {
     
     private var isEditMode = false
     private var recordId = -1
+
+    // [A2 대안 A] 최종 선택된 사진의 임시 URI 보관 (저장 전까지 메모리에만 임시 적재)
+    private var selectedImageUri: Uri? = null
+
+    // 카메라 캡처용 임시 파일 및 URI 변수
+    private var tempCameraFile: File? = null
+    private var tempCameraUri: Uri? = null
+
+    // 갤러리 이미지 선택 결과 수신 런처 (Task 4.3 연동)
+    private val galleryLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            selectedImageUri = uri
+            displaySelectedImage(uri)
+        }
+    }
+
+    // 카메라 직접 촬영 결과 수신 런처 (Task 4.3 연동)
+    private val cameraLauncher = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success) {
+            tempCameraUri?.let { uri ->
+                selectedImageUri = uri
+                displaySelectedImage(uri)
+            }
+        } else {
+            // 촬영 실패 또는 취소 시 생성해 둔 임시 파일 즉시 제거
+            tempCameraFile?.let { file ->
+                if (file.exists()) {
+                    file.delete()
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +108,15 @@ class EditActivity : AppCompatActivity() {
             // TODO: 임시 보관된 URI를 filesDir로 영속 복사 후 DB에 CRUD 저장 처리 예정 (Task 4.4 연동)
             Toast.makeText(this, "저장 기능 연동 예정", Toast.LENGTH_SHORT).show()
         }
+
+        // 4단계: 갤러리 및 카메라 사진 호출 버튼 리스너 바인딩 (Task 4.3 연동)
+        binding.btnSelectGallery.setOnClickListener {
+            galleryLauncher.launch("image/*")
+        }
+
+        binding.btnTakeCamera.setOnClickListener {
+            startCameraCapture()
+        }
     }
 
     /**
@@ -83,6 +132,7 @@ class EditActivity : AppCompatActivity() {
 
                 // 이미지가 등록된 기록일 경우 저수준 최적화 디코더를 경유하여 비동기 렌더링
                 if (!record.photoUri.isNullOrEmpty()) {
+                    selectedImageUri = Uri.parse(record.photoUri)
                     val bitmap = loadDetailImage(record.photoUri)
                     if (bitmap != null) {
                         binding.ivDetailPhoto.setImageBitmap(bitmap)
@@ -94,6 +144,7 @@ class EditActivity : AppCompatActivity() {
             }
         }
     }
+
 
     /**
      * DatePickerDialog를 호출하여 YYYY-MM-DD 규격의 날짜를 입력 폼에 설정함.
@@ -156,5 +207,43 @@ class EditActivity : AppCompatActivity() {
             }
         }
         return inSampleSize
+    }
+
+    /**
+     * 카메라 촬영을 위해 임시 저장용 빈 파일과 FileProvider Content URI를 생성하고 카메라를 구동함.
+     */
+    private fun startCameraCapture() {
+        try {
+            // 캐시 디렉토리 하위에 유니크한 임시 파일 생성
+            val tempFile = File.createTempFile("img_temp_", ".jpg", cacheDir).also {
+                tempCameraFile = it
+            }
+            
+            // Nougat(API 24) 이상 보안 규정에 따른 FileProvider 가상 content:// URI 생성
+            val providerAuthority = "${packageName}.fileprovider"
+            val uri = FileProvider.getUriForFile(this, providerAuthority, tempFile).also {
+                tempCameraUri = it
+            }
+            
+            cameraLauncher.launch(uri)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(this, "임시 파일 생성 실패: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 선택된 임시 URI 이미지를 비동기 디코딩하여 화면의 대형 이미지뷰에 안전하게 표시함.
+     */
+    private fun displaySelectedImage(uri: Uri) {
+        lifecycleScope.launch {
+            val bitmap = loadDetailImage(uri.toString())
+            if (bitmap != null) {
+                binding.ivDetailPhoto.setImageBitmap(bitmap)
+            } else {
+                binding.ivDetailPhoto.setImageResource(R.drawable.default_image)
+                Toast.makeText(this@EditActivity, "이미지 로드 실패", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

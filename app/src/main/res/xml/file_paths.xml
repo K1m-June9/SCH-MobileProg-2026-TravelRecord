@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 카메라 촬영 시 가상 콘텐츠 URI 생성을 위한 내부 캐시 경로 설정 -->
+    <cache-path name="my_images" path="." />
+</paths>
