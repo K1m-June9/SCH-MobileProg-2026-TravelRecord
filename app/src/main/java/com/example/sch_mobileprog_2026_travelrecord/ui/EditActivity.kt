@@ -267,6 +267,26 @@ class EditActivity : AppCompatActivity() {
                 // 4단계: 모드 분기에 따라 SQLite DML 실행
                 if (isEditMode) {
                     dbHelper.updateRecord(record)
+
+                    // 5단계: [Task 4.5] 수정 시 새로운 이미지로 교체 완료 후, 이전의 낡은 가비지 이미지 물리 파일 삭제
+                    if (currentUriString != originalPhotoUri && !originalPhotoUri.isNullOrEmpty()) {
+                        withContext(Dispatchers.IO) {
+                            try {
+                                val uri = Uri.parse(originalPhotoUri)
+                                val oldFile = if (uri.scheme == "file") {
+                                    File(uri.path ?: "")
+                                } else {
+                                    File(originalPhotoUri!!)
+                                }
+                                // 안전장치: 앱 내부 저장소(filesDir) 하위의 복사된 물리 파일만 조준 사격하여 지움 (외부 원본 보존)
+                                if (oldFile.exists() && oldFile.parentFile?.absolutePath == filesDir.absolutePath) {
+                                    oldFile.delete()
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
                     Toast.makeText(this@EditActivity, "여행 기록이 수정되었습니다.", Toast.LENGTH_SHORT).show()
                 } else {
                     dbHelper.insertRecord(record)
