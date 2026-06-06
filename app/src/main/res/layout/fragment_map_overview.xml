@@ -6,12 +6,12 @@
     android:layout_height="match_parent"
     tools:context=".ui.MapOverviewFragment">
 
-    <TextView
-        android:id="@+id/text_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="여행 지도 화면 (준비 중)"
-        android:textSize="18sp"
+    <!-- 구글 지도 컴포넌트를 올리기 위한 SupportMapFragment 선언 -->
+    <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
