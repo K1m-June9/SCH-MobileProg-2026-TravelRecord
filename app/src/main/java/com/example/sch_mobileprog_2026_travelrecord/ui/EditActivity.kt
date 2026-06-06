@@ -20,6 +20,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.util.Calendar
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 
 /**
  * 여행 기록을 새롭게 추가하거나 기존 데이터를 수정하는 단독 액티비티.
@@ -356,20 +361,71 @@ class EditActivity : AppCompatActivity() {
     }
 
     /**
-     * 사진에 GPS 메타데이터가 존재하지 않을 때, 수동으로 위치 지정을 의뢰하는 경고 다이얼로그 노출
+     * 사진에 GPS 메타데이터가 존재하지 않을 때, 구글 지도가 내장된 커스텀 다이얼로그를 띄워
+     * 사용자가 지도 위를 직접 터치하여 위도/경도 위치를 지정할 수 있는 수동 위치 연동 수립 (대안 A 완전 구현)
      */
     private fun showManualLocationWarningDialog() {
-        android.app.AlertDialog.Builder(this)
-            .setTitle("위치 정보 없음")
-            .setMessage("선택한 사진에 GPS 위치 정보가 기록되어 있지 않습니다.\n지도를 열어 수동으로 여행지 위치를 지정하시겠습니까?")
-            .setPositiveButton("예/지도 열기") { _, _ ->
-                // TODO: 구글 지도가 포함된 커스텀 다이얼로그 팝업 소환 (Task 5.3 및 5.4 연동 시점에 마커 핀 지정 결합)
-                Toast.makeText(this, "수동 위치 설정 지도가 준비 중입니다. (Task 5.3 연동 예정)", Toast.LENGTH_SHORT).show()
+        // 커스텀 다이얼로그 레이아웃 인플레이션
+        val dialogView = layoutInflater.inflate(R.layout.dialog_map_selection, null)
+        val mapView = dialogView.findViewById<MapView>(R.id.dialog_map_view)
+        
+        // 다이얼로그 빌더 작성 및 소환
+        val alertDialog = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        // MapView 라이프사이클 수동 연동 제어 (메모리 누수 방지)
+        mapView.onCreate(null)
+        mapView.onResume()
+
+        var tempSelectedLatLng: LatLng? = null
+        var currentMap: GoogleMap? = null
+
+        // 구글 지도 비동기 준비
+        mapView.getMapAsync { googleMap ->
+            currentMap = googleMap
+            googleMap.uiSettings.isZoomControlsEnabled = true
+
+            // 초기 카메라 위치는 서울 시청으로 기본 지정 (초점 최적화)
+            val defaultCenter = LatLng(37.5665, 126.9780)
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultCenter, 14f))
+
+            // 지도 터치 시 기존 핀 마커를 제거하고 새롭게 터치한 영역에 핀 마커 등록
+            googleMap.setOnMapClickListener { latLng ->
+                googleMap.clear()
+                googleMap.addMarker(
+                    MarkerOptions()
+                        .position(latLng)
+                        .title("선택된 위치")
+                )
+                tempSelectedLatLng = latLng
             }
-            .setNegativeButton("아니오(미설정)") { _, _ ->
-                originalLatitude = null
-                originalLongitude = null
+        }
+
+        // 다이얼로그 내부 동작 제어 단추 바인딩
+        dialogView.findViewById<View>(R.id.btn_dialog_cancel).setOnClickListener {
+            // 취소 시 좌표는 지정하지 않고 다이얼로그 해제
+            originalLatitude = null
+            originalLongitude = null
+            mapView.onDestroy()
+            alertDialog.dismiss()
+        }
+
+        dialogView.findViewById<View>(R.id.btn_dialog_confirm).setOnClickListener {
+            // 확인 시 사용자가 지도 상에 핀 마커를 꽂았는지 무결성 검증
+            val latLng = tempSelectedLatLng
+            if (latLng != null) {
+                originalLatitude = latLng.latitude
+                originalLongitude = latLng.longitude
+                Toast.makeText(this, "선택된 위치 좌표를 연동했습니다.", Toast.LENGTH_SHORT).show()
+                mapView.onDestroy()
+                alertDialog.dismiss()
+            } else {
+                Toast.makeText(this, "지도 위를 탭하여 위치 핀 마커를 표시해 주세요.", Toast.LENGTH_SHORT).show()
             }
-            .show()
+        }
+
+        alertDialog.show()
     }
 }
