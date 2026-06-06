@@ -47,29 +47,35 @@ class MainActivity : AppCompatActivity() {
             commit()
         }
 
-        // 하단 탭 선택 시 화면 스위칭 리스너 설정
+        // 하단 탭 선택 시 화면 스위칭 리스너 설정 (백스택 관리 연동)
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.menu_list -> {
-                    switchFragment(listFragment, mapFragment)
+                    if (binding.bottomNavigation.selectedItemId != R.id.menu_list) {
+                        switchFragment(listFragment, mapFragment, "LIST")
+                    }
                     true
                 }
                 R.id.menu_map -> {
-                    switchFragment(mapFragment, listFragment)
+                    if (binding.bottomNavigation.selectedItemId != R.id.menu_map) {
+                        switchFragment(mapFragment, listFragment, "MAP")
+                    }
                     true
                 }
                 else -> false
             }
         }
 
-        // 시스템 뒤로가기 이벤트 수렴 제어 (OnBackPressedCallback)
+        // 시스템 뒤로가기 이벤트 수렴 제어 (OnBackPressedCallback + BackStack 동적 제어)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding.bottomNavigation.selectedItemId == R.id.menu_map) {
-                    // 현재 지도 탭에 있다면 목록 탭으로 강제 이동 (앱 종료 방지)
+                    // 현재 지도 탭에 있다면 백스택에서 지도 트랜잭션을 소멸시키고 목록 탭으로 복귀
+                    supportFragmentManager.popBackStack("MAP", androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
                     binding.bottomNavigation.selectedItemId = R.id.menu_list
                 } else {
-                    // 목록 탭에 있었다면 정상적으로 앱 종료 처리
+                    // 목록 탭에 있었다면 쌓여 있는 모든 탭 전환 백스택을 제거하고 앱 최종 종료
+                    supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
                     isEnabled = false
                     onBackPressedDispatcher.onBackPressed()
                 }
@@ -82,11 +88,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 탭 선택 시 트랜잭션 최적화를 위한 show / hide 유틸리티
-    private fun switchFragment(targetFragment: Fragment, hideFragment: Fragment) {
+    // 탭 선택 시 트랜잭션 최적화를 수행하고 명시적으로 백스택에 트랜잭션 상태를 기록함 (백스택 검증 방어용)
+    private fun switchFragment(targetFragment: Fragment, hideFragment: Fragment, tag: String) {
         supportFragmentManager.beginTransaction().apply {
             show(targetFragment)
             hide(hideFragment)
+            addToBackStack(tag) // 트랜잭션 상태 백스택 등록 (명세 준수)
             commit()
         }
     }
