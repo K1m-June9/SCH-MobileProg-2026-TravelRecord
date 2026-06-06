@@ -1,10 +1,19 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.example.sch_mobileprog_2026_travelrecord.MainActivity">
+    tools:context="com.example.sch_mobileprog_2026_travelrecord.ui.MainActivity">
+    
+    <!-- 정렬 변경 토글 메뉴 (날짜순 / 이름순 토글) -->
+    <item
+        android:id="@+id/action_sort_toggle"
+        android:orderInCategory="90"
+        android:title="날짜순 정렬"
+        app:showAsAction="ifRoom" />
+        
+    <!-- 앱 정보 메뉴 -->
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:title="앱 정보"
         app:showAsAction="never" />
 </menu>

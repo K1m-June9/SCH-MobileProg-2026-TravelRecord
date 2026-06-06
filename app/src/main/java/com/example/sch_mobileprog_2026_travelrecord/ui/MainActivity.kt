@@ -10,12 +10,15 @@ import androidx.core.view.WindowInsetsCompat
 import android.view.Menu
 import android.view.MenuItem
 import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AlertDialog
 import com.example.sch_mobileprog_2026_travelrecord.R
+import com.example.sch_mobileprog_2026_travelrecord.data.DBHelper
 import com.example.sch_mobileprog_2026_travelrecord.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private var isSortByDate = true // 현재 정렬 기준 토글 상태 필드 (기본값: 날짜 최신순)
 
     // 탭 구성을 위한 프래그먼트 인스턴스 생성
     private val listFragment = TravelListFragment()
@@ -96,8 +99,25 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            R.id.action_sort_toggle -> {
+                // 정렬 기준 토글 스위칭 및 프래그먼트 비동기 리로드 호출 (Task 5.1 연동)
+                isSortByDate = !isSortByDate
+                if (isSortByDate) {
+                    item.title = "날짜순 정렬"
+                    listFragment.changeSortOrderAndReload(DBHelper.SortOrder.DATE_DESC)
+                } else {
+                    item.title = "이름순 정렬"
+                    listFragment.changeSortOrderAndReload(DBHelper.SortOrder.PLACE_ASC)
+                }
+                true
+            }
             R.id.action_settings -> {
-                // TODO: 앱 정보 다이얼로그 노출 예정
+                // 앱 정보 안내 다이얼로그 소환 (명세서 요건 충족)
+                AlertDialog.Builder(this)
+                    .setTitle("앱 정보")
+                    .setMessage("여행 여정 기록장 v1.0\n2026학년도 모바일 프로그래밍 기말 프로젝트")
+                    .setPositiveButton("확인", null)
+                    .show()
                 true
             }
             else -> super.onOptionsItemSelected(item)

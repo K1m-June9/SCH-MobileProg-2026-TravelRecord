@@ -112,6 +112,14 @@ class TravelListFragment : Fragment() {
     }
 
     /**
+     * 외부(MainActivity)에서 호출하여 정렬 기준을 갱신하고 DB 비동기 조회를 재수행함.
+     */
+    fun changeSortOrderAndReload(newOrder: DBHelper.SortOrder) {
+        currentSortOrder = newOrder
+        loadTravelRecords()
+    }
+
+    /**
      * 컨텍스트 메뉴 아이템('수정' 또는 '삭제') 클릭 시 콜백 이벤트 수신
      */
     override fun onContextItemSelected(item: MenuItem): Boolean {
