@@ -326,17 +326,50 @@ class EditActivity : AppCompatActivity() {
     }
 
     /**
-     * 선택된 임시 URI 이미지를 비동기 디코딩하여 화면의 대형 이미지뷰에 안전하게 표시함.
+     * 선택된 임시 URI 이미지를 비동기 디코딩하여 화면의 대형 이미지뷰에 안전하게 표시하고 Exif GPS를 추출함.
      */
     private fun displaySelectedImage(uri: Uri) {
         lifecycleScope.launch {
+            // 1단계: 고해상도 이미지 비동기 디코딩 렌더링
             val bitmap = loadDetailImage(uri.toString())
             if (bitmap != null) {
                 binding.ivDetailPhoto.setImageBitmap(bitmap)
             } else {
                 binding.ivDetailPhoto.setImageResource(R.drawable.default_image)
                 Toast.makeText(this@EditActivity, "이미지 로드 실패", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            // 2단계: 이미지 바이너리로부터 Exif GPS 좌표 비동기 추출 시도 (Task 5.2 연동)
+            val gps = com.example.sch_mobileprog_2026_travelrecord.util.LocationUtil.extractGpsCoordinates(this@EditActivity, uri)
+            if (gps != null) {
+                originalLatitude = gps.first
+                originalLongitude = gps.second
+                Toast.makeText(this@EditActivity, "사진의 GPS 위치 정보를 가져왔습니다.", Toast.LENGTH_SHORT).show()
+            } else {
+                // GPS 정보가 부재할 경우 수동 위치 지정을 위한 대화창 소환 (대안 A 뼈대 구현)
+                originalLatitude = null
+                originalLongitude = null
+                showManualLocationWarningDialog()
             }
         }
+    }
+
+    /**
+     * 사진에 GPS 메타데이터가 존재하지 않을 때, 수동으로 위치 지정을 의뢰하는 경고 다이얼로그 노출
+     */
+    private fun showManualLocationWarningDialog() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("위치 정보 없음")
+            .setMessage("선택한 사진에 GPS 위치 정보가 기록되어 있지 않습니다.\n지도를 열어 수동으로 여행지 위치를 지정하시겠습니까?")
+            .setPositiveButton("예/지도 열기") { _, _ ->
+                // TODO: 구글 지도가 포함된 커스텀 다이얼로그 팝업 소환 (Task 5.3 및 5.4 연동 시점에 마커 핀 지정 결합)
+                Toast.makeText(this, "수동 위치 설정 지도가 준비 중입니다. (Task 5.3 연동 예정)", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("아니오(미설정)") { _, _ ->
+                originalLatitude = null
+                originalLongitude = null
+            }
+            .show()
     }
 }
