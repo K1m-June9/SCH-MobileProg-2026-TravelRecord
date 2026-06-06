@@ -1,5 +1,6 @@
 package com.example.sch_mobileprog_2026_travelrecord.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.enableEdgeToEdge
@@ -73,7 +74,8 @@ class MainActivity : AppCompatActivity() {
         })
 
         binding.fab.setOnClickListener { view ->
-            // TODO: 추가 모드 EditActivity 진입 인텐트 연동 예정
+            val intent = Intent(this, EditActivity::class.java)
+            startActivity(intent)
         }
     }
 

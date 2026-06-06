@@ -166,6 +166,46 @@ class DBHelper private constructor(context: Context) :
     }
 
     /**
+     * 특정 고유 번호(no)에 해당하는 단일 여행 기록을 조회함.
+     * 데이터가 존재하지 않거나 에러 발생 시 null을 반환함.
+     */
+    suspend fun getRecordById(no: Int): TravelRecord? = withContext(Dispatchers.IO) {
+        val db = readableDatabase
+        val query = "SELECT * FROM $TABLE_NAME WHERE `$COLUMN_NO` = ?"
+        db.rawQuery(query, arrayOf(no.toString())).use { cursor ->
+            if (cursor.moveToFirst()) {
+                val colNo = cursor.getColumnIndex(COLUMN_NO)
+                val colPlace = cursor.getColumnIndex(COLUMN_PLACE)
+                val colVisitDate = cursor.getColumnIndex(COLUMN_VISIT_DATE)
+                val colMemo = cursor.getColumnIndex(COLUMN_MEMO)
+                val colPhotoUri = cursor.getColumnIndex(COLUMN_PHOTO_URI)
+                val colLatitude = cursor.getColumnIndex(COLUMN_LATITUDE)
+                val colLongitude = cursor.getColumnIndex(COLUMN_LONGITUDE)
+
+                val rNo = if (colNo != -1) cursor.getInt(colNo) else null
+                val place = if (colPlace != -1) cursor.getString(colPlace) else ""
+                val visitDate = if (colVisitDate != -1) cursor.getString(colVisitDate) else ""
+                val memo = if (colMemo != -1) cursor.getString(colMemo) else null
+                val photoUri = if (colPhotoUri != -1) cursor.getString(colPhotoUri) else null
+                val latitude = if (colLatitude != -1 && !cursor.isNull(colLatitude)) cursor.getDouble(colLatitude) else null
+                val longitude = if (colLongitude != -1 && !cursor.isNull(colLongitude)) cursor.getDouble(colLongitude) else null
+
+                TravelRecord(
+                    no = rNo,
+                    place = place,
+                    visitDate = visitDate,
+                    memo = memo,
+                    photoUri = photoUri,
+                    latitude = latitude,
+                    longitude = longitude
+                )
+            } else {
+                null
+            }
+        }
+    }
+
+    /**
      * 특정 여행 기록을 고유 키(no) 기준으로 삭제함.
      * 비동기 스레드 분리를 적용하며, DB 커넥션은 닫지 않고 유지함.
      */
@@ -174,3 +214,4 @@ class DBHelper private constructor(context: Context) :
         db.delete(TABLE_NAME, "`$COLUMN_NO` = ?", arrayOf(no.toString()))
     }
 }
+

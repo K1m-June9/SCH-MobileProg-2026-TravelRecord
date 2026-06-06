@@ -1,6 +1,7 @@
 package com.example.sch_mobileprog_2026_travelrecord.ui
 
 import android.net.Uri
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -46,8 +47,10 @@ class TravelListFragment : Fragment() {
         
         // 어댑터 인스턴스 초기화 및 클릭 콜백 리스너 바인딩
         travelAdapter = TravelAdapter(viewLifecycleOwner.lifecycleScope) { no ->
-            // TODO: 상세 화면(EditActivity) 수정 모드 인텐트 전환 예정 (DAY 4 연동)
-            Toast.makeText(requireContext(), "선택된 기록 번호: $no", Toast.LENGTH_SHORT).show()
+            val intent = Intent(requireContext(), EditActivity::class.java).apply {
+                putExtra("no", no)
+            }
+            startActivity(intent)
         }
         
         binding.recyclerView.adapter = travelAdapter
@@ -117,8 +120,10 @@ class TravelListFragment : Fragment() {
         
         return when (item.itemId) {
             R.id.menu_context_edit -> {
-                // TODO: 상세 화면(EditActivity) 수정 모드 인텐트 전환 예정 (DAY 4 연동)
-                Toast.makeText(requireContext(), "수정 선택: $no 번 기록", Toast.LENGTH_SHORT).show()
+                val intent = Intent(requireContext(), EditActivity::class.java).apply {
+                    putExtra("no", no)
+                }
+                startActivity(intent)
                 true
             }
             R.id.menu_context_delete -> {

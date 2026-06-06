@@ -1,157 +1,178 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
+    android:orientation="vertical"
     android:background="#FAFAFA">
 
-    <LinearLayout
+    <!-- 상단 툴바 -->
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_height="wrap_content">
 
-        <!-- 대형 이미지 뷰 카드 -->
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar_edit"
             android:layout_width="match_parent"
-            android:layout_height="240dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            android:layout_marginBottom="16dp">
+            android:layout_height="?attr/actionBarSize"
+            app:title="여행 기록"
+            app:titleTextColor="#FFFFFF"
+            android:background="?attr/colorPrimary" />
 
-            <ImageView
-                android:id="@+id/iv_detail_photo"
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- 대형 이미지 뷰 카드 -->
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@drawable/default_image"
-                android:contentDescription="선택된 여행 사진" />
-        </androidx.cardview.widget.CardView>
+                android:layout_height="240dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="16dp">
 
-        <!-- 사진 촬영 / 선택 버튼 레이아웃 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp"
-            android:weightSum="2">
+                <ImageView
+                    android:id="@+id/iv_detail_photo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/default_image"
+                    android:contentDescription="선택된 여행 사진" />
+            </androidx.cardview.widget.CardView>
 
-            <Button
-                android:id="@+id/btn_select_gallery"
-                android:layout_width="0dp"
+            <!-- 사진 촬영 / 선택 버튼 레이아웃 -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:text="갤러리 선택"
-                android:backgroundTint="#6200EE"
-                android:textColor="#FFFFFF"
-                style="?attr/materialButtonStyle" />
+                android:orientation="horizontal"
+                android:layout_marginBottom="24dp"
+                android:weightSum="2">
 
-            <Button
-                android:id="@+id/btn_take_camera"
-                android:layout_width="0dp"
+                <Button
+                    android:id="@+id/btn_select_gallery"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="갤러리 선택"
+                    android:backgroundTint="#6200EE"
+                    android:textColor="#FFFFFF"
+                    style="?attr/materialButtonStyle" />
+
+                <Button
+                    android:id="@+id/btn_take_camera"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="카메라 촬영"
+                    android:backgroundTint="#3700B3"
+                    android:textColor="#FFFFFF"
+                    style="?attr/materialButtonStyle" />
+            </LinearLayout>
+
+            <!-- 입력 폼 영역 -->
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:text="카메라 촬영"
-                android:backgroundTint="#3700B3"
-                android:textColor="#FFFFFF"
-                style="?attr/materialButtonStyle" />
-        </LinearLayout>
-
-        <!-- 입력 폼 영역 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="여행지"
-            android:textSize="14sp"
-            android:textColor="#666666"
-            android:textStyle="bold"
-            android:layout_marginBottom="6dp" />
-
-        <EditText
-            android:id="@+id/et_place"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="여행지명을 입력하세요."
-            android:inputType="text"
-            android:maxLines="1"
-            android:padding="12dp"
-            android:background="@android:drawable/editbox_background_normal"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="방문 날짜"
-            android:textSize="14sp"
-            android:textColor="#666666"
-            android:textStyle="bold"
-            android:layout_marginBottom="6dp" />
-
-        <EditText
-            android:id="@+id/et_visit_date"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="날짜를 선택하세요 (YYYY-MM-DD)"
-            android:inputType="none"
-            android:focusable="false"
-            android:clickable="true"
-            android:padding="12dp"
-            android:background="@android:drawable/editbox_background_normal"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="여행 메모"
-            android:textSize="14sp"
-            android:textColor="#666666"
-            android:textStyle="bold"
-            android:layout_marginBottom="6dp" />
-
-        <EditText
-            android:id="@+id/et_memo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="여정의 소중한 기억을 작성해 보세요."
-            android:inputType="textMultiLine"
-            android:minLines="4"
-            android:gravity="top"
-            android:padding="12dp"
-            android:background="@android:drawable/editbox_background_normal"
-            android:layout_marginBottom="32dp" />
-
-        <!-- 최종 동작 제어 버튼 레이아웃 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="2">
-
-            <Button
-                android:id="@+id/btn_cancel"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:text="취소"
-                android:backgroundTint="#E0E0E0"
-                android:textColor="#333333"
-                style="?attr/materialButtonOutlinedStyle" />
-
-            <Button
-                android:id="@+id/btn_save"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:text="저장"
-                android:backgroundTint="#03DAC6"
-                android:textColor="#000000"
+                android:text="여행지"
+                android:textSize="14sp"
+                android:textColor="#666666"
                 android:textStyle="bold"
-                style="?attr/materialButtonStyle" />
+                android:layout_marginBottom="6dp" />
+
+            <EditText
+                android:id="@+id/et_place"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="여행지명을 입력하세요."
+                android:inputType="text"
+                android:maxLines="1"
+                android:padding="12dp"
+                android:background="@android:drawable/editbox_background_normal"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="방문 날짜"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <EditText
+                android:id="@+id/et_visit_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="날짜를 선택하세요 (YYYY-MM-DD)"
+                android:inputType="none"
+                android:focusable="false"
+                android:clickable="true"
+                android:padding="12dp"
+                android:background="@android:drawable/editbox_background_normal"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="여행 메모"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <EditText
+                android:id="@+id/et_memo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="여정의 소중한 기억을 작성해 보세요."
+                android:inputType="textMultiLine"
+                android:minLines="4"
+                android:gravity="top"
+                android:padding="12dp"
+                android:background="@android:drawable/editbox_background_normal"
+                android:layout_marginBottom="32dp" />
+
+            <!-- 최종 동작 제어 버튼 레이아웃 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <Button
+                    android:id="@+id/btn_cancel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="취소"
+                    android:backgroundTint="#E0E0E0"
+                    android:textColor="#333333"
+                    style="?attr/materialButtonOutlinedStyle" />
+
+                <Button
+                    android:id="@+id/btn_save"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="저장"
+                    android:backgroundTint="#03DAC6"
+                    android:textColor="#000000"
+                    android:textStyle="bold"
+                    style="?attr/materialButtonStyle" />
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</LinearLayout>
