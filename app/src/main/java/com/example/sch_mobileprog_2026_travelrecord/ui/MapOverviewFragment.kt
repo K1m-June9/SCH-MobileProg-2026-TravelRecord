@@ -78,7 +78,7 @@ class MapOverviewFragment : Fragment(), OnMapReadyCallback {
         // 기본 지도 제어 UI 활성화 (줌인/아웃 컨트롤러 배치)
         mMap?.uiSettings?.isZoomControlsEnabled = true
 
-        // 마커 정보창(InfoWindow) 클릭 시 상세보기(EditActivity) 연동 설정 (Task 6.2)
+        // 마커 정보창(InfoWindow) 클릭 시 상세보기(EditActivity) 연동 설정
         mMap?.setOnInfoWindowClickListener { marker ->
             val recordId = marker.tag as? Int
             if (recordId != null) {

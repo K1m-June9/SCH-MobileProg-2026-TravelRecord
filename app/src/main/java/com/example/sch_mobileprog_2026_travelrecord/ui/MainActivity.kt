@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // 전역 가비지 이미지 수집기 비동기 기동 (Task 6.5)
+        // 전역 가비지 이미지 수집기 비동기 기동
         startGlobalGarbageCollector()
     }
 
@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction().apply {
             show(targetFragment)
             hide(hideFragment)
-            addToBackStack(tag) // 트랜잭션 상태 백스택 등록 (명세 준수)
+            addToBackStack(tag) // 트랜잭션 상태 백스택 등록
             commit()
         }
     }
@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_sort_toggle -> {
-                // 정렬 기준 토글 스위칭 및 프래그먼트 비동기 리로드 호출 (Task 5.1 연동)
+                // 정렬 기준 토글 스위칭 및 프래그먼트 비동기 리로드 호출
                 isSortByDate = !isSortByDate
                 if (isSortByDate) {
                     item.title = "날짜순 정렬"
@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_settings -> {
-                // 앱 정보 안내 다이얼로그 소환 (명세서 요건 충족)
+                // 앱 정보 안내 다이얼로그 소환
                 AlertDialog.Builder(this)
                     .setTitle("앱 정보")
                     .setMessage("여행 여정 기록장 v1.0\n2026학년도 모바일 프로그래밍 기말 프로젝트")
@@ -141,12 +141,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 앱 기동 후 백그라운드 스레드에서 잉여 이미지 파일 및 cache 임시 파일을 청소하는 수집기 (Task 6.5)
+     * 앱 기동 후 백그라운드 스레드에서 잉여 이미지 파일 및 cache 임시 파일을 청소하는 수집기
      */
     private fun startGlobalGarbageCollector() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // 1단계: Cold Start 시 UI 스레드와 I/O 경합을 피하기 위해 2초 대기 (안정성 우려 반영)
+                // 1단계: Cold Start 시 UI 스레드와 I/O 경합을 피하기 위해 2초 대기 (안정성 우려)
                 delay(2000)
 
                 val dbHelper = DBHelper.getInstance(this@MainActivity)

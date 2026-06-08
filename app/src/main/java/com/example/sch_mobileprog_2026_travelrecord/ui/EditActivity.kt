@@ -43,7 +43,7 @@ class EditActivity : AppCompatActivity() {
     private var isReadOnly = false
     private var recordId = -1
 
-    // [A2 대안 A] 최종 선택된 사진의 임시 URI 보관 (저장 전까지 메모리에만 임시 적재)
+    // 최종 선택된 사진의 임시 URI 보관 (저장 전까지 메모리에만 임시 적재)
     private var selectedImageUri: Uri? = null
 
     // 기존 데이터 복원 및 수정을 위한 원본 백업 변수
@@ -55,7 +55,7 @@ class EditActivity : AppCompatActivity() {
     private var tempCameraFile: File? = null
     private var tempCameraUri: Uri? = null
 
-    // 갤러리 이미지 선택 결과 수신 런처 (Task 4.3 연동)
+    // 갤러리 이미지 선택 결과 수신 런처
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -65,7 +65,7 @@ class EditActivity : AppCompatActivity() {
         }
     }
 
-    // 카메라 직접 촬영 결과 수신 런처 (Task 4.3 연동)
+    // 카메라 직접 촬영 결과 수신 런처
     private val cameraLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success: Boolean ->
@@ -130,7 +130,7 @@ class EditActivity : AppCompatActivity() {
             saveTravelRecord()
         }
 
-        // 4단계: 갤러리 및 카메라 사진 호출 버튼 리스너 바인딩 (Task 4.3 연동)
+        // 4단계: 갤러리 및 카메라 사진 호출 버튼 리스너 바인딩
         binding.btnSelectGallery.setOnClickListener {
             galleryLauncher.launch("image/*")
         }
@@ -139,7 +139,7 @@ class EditActivity : AppCompatActivity() {
             startCameraCapture()
         }
 
-        // 5단계: 초기 읽기 전용 상태에 따른 뷰 활성화 설정 (Task 6.3)
+        // 5단계: 초기 읽기 전용 상태에 따른 뷰 활성화 설정
         setFieldsEnabled(!isReadOnly)
     }
 
@@ -303,7 +303,7 @@ class EditActivity : AppCompatActivity() {
                 if (isEditMode) {
                     dbHelper.updateRecord(record)
 
-                    // 5단계: [Task 4.5] 수정 시 새로운 이미지로 교체 완료 후, 이전의 낡은 가비지 이미지 물리 파일 삭제
+                    // 5단계: 수정 시 새로운 이미지로 교체 완료 후, 이전의 낡은 가비지 이미지 물리 파일 삭제
                     if (currentUriString != originalPhotoUri && !originalPhotoUri.isNullOrEmpty()) {
                         withContext(Dispatchers.IO) {
                             try {
@@ -375,14 +375,14 @@ class EditActivity : AppCompatActivity() {
                 return@launch
             }
 
-            // 2단계: 이미지 바이너리로부터 Exif GPS 좌표 비동기 추출 시도 (Task 5.2 연동)
+            // 2단계: 이미지 바이너리로부터 Exif GPS 좌표 비동기 추출 시도
             val gps = com.example.sch_mobileprog_2026_travelrecord.util.LocationUtil.extractGpsCoordinates(this@EditActivity, uri)
             if (gps != null) {
                 originalLatitude = gps.first
                 originalLongitude = gps.second
                 Toast.makeText(this@EditActivity, "사진의 GPS 위치 정보를 가져왔습니다.", Toast.LENGTH_SHORT).show()
             } else {
-                // GPS 정보가 부재할 경우 수동 위치 지정을 위한 대화창 소환 (대안 A 뼈대 구현)
+                // GPS 정보가 부재할 경우 수동 위치 지정을 위한 대화창 소환
                 originalLatitude = null
                 originalLongitude = null
                 showManualLocationWarningDialog()
@@ -392,7 +392,7 @@ class EditActivity : AppCompatActivity() {
 
     /**
      * 사진에 GPS 메타데이터가 존재하지 않을 때, 구글 지도가 내장된 커스텀 다이얼로그를 띄워
-     * 사용자가 지도 위를 직접 터치하여 위도/경도 위치를 지정할 수 있는 수동 위치 연동 수립 (대안 A 완전 구현)
+     * 사용자가 지도 위를 직접 터치하여 위도/경도 위치를 지정할 수 있는 수동 위치 연동 수립
      */
     private fun showManualLocationWarningDialog() {
         // 커스텀 다이얼로그 레이아웃 인플레이션
@@ -460,7 +460,7 @@ class EditActivity : AppCompatActivity() {
     }
 
     /**
-     * 상세 조회 시 모든 텍스트 필드를 잠그고 사진/저장 버튼들을 숨기거나 편집 시 활성화함 (Task 6.3)
+     * 상세 조회 시 모든 텍스트 필드를 잠그고 사진/저장 버튼들을 숨기거나 편집 시 활성화함
      */
     private fun setFieldsEnabled(enabled: Boolean) {
         binding.etPlace.isEnabled = enabled
@@ -502,7 +502,7 @@ class EditActivity : AppCompatActivity() {
     }
 
     /**
-     * 입력 폼 이외의 빈 공간을 터치했을 때 키보드를 자동으로 내리고 포커스를 해제함 (Task 6.1)
+     * 입력 폼 이외의 빈 공간을 터치했을 때 키보드를 자동으로 내리고 포커스를 해제함
      */
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
         if (ev?.action == MotionEvent.ACTION_DOWN) {
