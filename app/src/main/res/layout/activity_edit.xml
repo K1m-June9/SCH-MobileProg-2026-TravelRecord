@@ -4,20 +4,29 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FAFAFA">
+    android:background="@color/background_light">
 
     <!-- 상단 툴바 -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:elevation="0dp"
+        android:background="@color/background_light">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar_edit"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:title="여행 기록"
-            app:titleTextColor="#FFFFFF"
-            android:background="?attr/colorPrimary" />
+            app:titleTextColor="@color/text_primary"
+            app:navigationIconTint="@color/text_primary"
+            android:background="@color/background_light" />
+
+        <!-- 얇은 하단 경계선 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/border_light" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -30,14 +39,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="24dp">
 
             <!-- 대형 이미지 뷰 카드 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="240dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
                 android:layout_marginBottom="16dp">
 
                 <ImageView
@@ -64,8 +73,9 @@
                     android:layout_weight="1"
                     android:layout_marginEnd="6dp"
                     android:text="갤러리 선택"
-                    android:backgroundTint="#6200EE"
-                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#F2F4F6"
+                    android:textColor="@color/text_primary"
+                    app:cornerRadius="12dp"
                     style="?attr/materialButtonStyle" />
 
                 <Button
@@ -75,8 +85,9 @@
                     android:layout_weight="1"
                     android:layout_marginStart="6dp"
                     android:text="카메라 촬영"
-                    android:backgroundTint="#3700B3"
+                    android:backgroundTint="@color/toss_blue"
                     android:textColor="#FFFFFF"
+                    app:cornerRadius="12dp"
                     style="?attr/materialButtonStyle" />
             </LinearLayout>
 
@@ -86,9 +97,9 @@
                 android:layout_height="wrap_content"
                 android:text="여행지"
                 android:textSize="14sp"
-                android:textColor="#666666"
+                android:textColor="@color/text_secondary"
                 android:textStyle="bold"
-                android:layout_marginBottom="6dp" />
+                android:layout_marginBottom="8dp" />
 
             <EditText
                 android:id="@+id/et_place"
@@ -97,18 +108,20 @@
                 android:hint="여행지명을 입력하세요."
                 android:inputType="text"
                 android:maxLines="1"
-                android:padding="12dp"
-                android:background="@android:drawable/editbox_background_normal"
-                android:layout_marginBottom="16dp" />
+                android:padding="16dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
+                android:background="@drawable/bg_edit_text"
+                android:layout_marginBottom="20dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="방문 날짜"
                 android:textSize="14sp"
-                android:textColor="#666666"
+                android:textColor="@color/text_secondary"
                 android:textStyle="bold"
-                android:layout_marginBottom="6dp" />
+                android:layout_marginBottom="8dp" />
 
             <EditText
                 android:id="@+id/et_visit_date"
@@ -118,18 +131,20 @@
                 android:inputType="none"
                 android:focusable="false"
                 android:clickable="true"
-                android:padding="12dp"
-                android:background="@android:drawable/editbox_background_normal"
-                android:layout_marginBottom="16dp" />
+                android:padding="16dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
+                android:background="@drawable/bg_edit_text"
+                android:layout_marginBottom="20dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="여행 메모"
                 android:textSize="14sp"
-                android:textColor="#666666"
+                android:textColor="@color/text_secondary"
                 android:textStyle="bold"
-                android:layout_marginBottom="6dp" />
+                android:layout_marginBottom="8dp" />
 
             <EditText
                 android:id="@+id/et_memo"
@@ -139,8 +154,10 @@
                 android:inputType="textMultiLine"
                 android:minLines="4"
                 android:gravity="top"
-                android:padding="12dp"
-                android:background="@android:drawable/editbox_background_normal"
+                android:padding="16dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
+                android:background="@drawable/bg_edit_text"
                 android:layout_marginBottom="32dp" />
 
             <!-- 최종 동작 제어 버튼 레이아웃 -->
@@ -157,9 +174,10 @@
                     android:layout_weight="1"
                     android:layout_marginEnd="6dp"
                     android:text="취소"
-                    android:backgroundTint="#E0E0E0"
-                    android:textColor="#333333"
-                    style="?attr/materialButtonOutlinedStyle" />
+                    android:backgroundTint="#F2F4F6"
+                    android:textColor="@color/text_primary"
+                    app:cornerRadius="12dp"
+                    style="?attr/materialButtonStyle" />
 
                 <Button
                     android:id="@+id/btn_save"
@@ -168,9 +186,10 @@
                     android:layout_weight="1"
                     android:layout_marginStart="6dp"
                     android:text="저장"
-                    android:backgroundTint="#03DAC6"
-                    android:textColor="#000000"
+                    android:backgroundTint="@color/toss_blue"
+                    android:textColor="#FFFFFF"
                     android:textStyle="bold"
+                    app:cornerRadius="12dp"
                     style="?attr/materialButtonStyle" />
             </LinearLayout>
         </LinearLayout>

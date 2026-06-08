@@ -1,8 +1,20 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.SCHMobileProg2026TravelRecord" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- 1. 메인 브랜드 테마 색상 (Toss Blue 적용) -->
+        <item name="colorPrimary">@color/toss_blue</item>
+        <item name="colorPrimaryDark">@color/toss_blue_dark</item>
+        <item name="colorAccent">@color/toss_blue</item>
+
+        <!-- 2. 전체 배경 및 Surface 색상 설정 (모던 오프화이트 및 순백색 카드) -->
+        <item name="android:windowBackground">@color/background_light</item>
+        <item name="colorSurface">@color/surface_card</item>
+
+        <!-- 3. 타이포그래피 제어 및 Pretendard 글로벌 폰트 지정 -->
+        <item name="android:fontFamily">@font/pretendard</item>
+        
+        <!-- 4. 상태 표시줄 및 내비게이션 바 기본 명세 (Light 모드 대응) -->
+        <item name="isLightTheme">true</item>
     </style>
 
     <style name="Theme.SCHMobileProg2026TravelRecord" parent="Base.Theme.SCHMobileProg2026TravelRecord" />

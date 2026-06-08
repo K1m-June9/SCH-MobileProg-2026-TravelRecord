@@ -2,4 +2,13 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Toss / shadcn 모던 테마 컬러 피커 -->
+    <color name="toss_blue">#3182F6</color>
+    <color name="toss_blue_dark">#1B64DA</color>
+    <color name="background_light">#FAFAFC</color>
+    <color name="border_light">#E5E8EB</color>
+    <color name="text_primary">#191F28</color>
+    <color name="text_secondary">#8B95A1</color>
+    <color name="surface_card">#FFFFFF</color>
 </resources>
