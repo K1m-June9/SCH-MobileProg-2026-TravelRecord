@@ -40,6 +40,7 @@ class EditActivity : AppCompatActivity() {
     private lateinit var dbHelper: DBHelper
     
     private var isEditMode = false
+    private var isReadOnly = false
     private var recordId = -1
 
     // [A2 대안 A] 최종 선택된 사진의 임시 URI 보관 (저장 전까지 메모리에만 임시 적재)
@@ -97,12 +98,17 @@ class EditActivity : AppCompatActivity() {
             finish()
         }
 
-        // 1단계: Intent 데이터 분석을 통한 추가/수정 모드 동적 식별
+        // 1단계: Intent 데이터 분석을 통한 추가/수정 모드 동적 식별 및 읽기 전용 여부 판단
         recordId = intent.getIntExtra("no", -1)
         isEditMode = recordId != -1
+        isReadOnly = intent.getBooleanExtra("read_only", false)
 
         if (isEditMode) {
-            binding.toolbarEdit.title = "여행 기록 수정"
+            if (isReadOnly) {
+                binding.toolbarEdit.title = "여행 기록"
+            } else {
+                binding.toolbarEdit.title = "여행 기록 수정"
+            }
             loadRecordData(recordId)
         } else {
             binding.toolbarEdit.title = "여행 기록 추가"
@@ -110,7 +116,9 @@ class EditActivity : AppCompatActivity() {
 
         // 2단계: 날짜 캘린더 다이얼로그(DatePickerDialog) 입력 연동
         binding.etVisitDate.setOnClickListener {
-            showDatePicker()
+            if (!isReadOnly) {
+                showDatePicker()
+            }
         }
 
         // 3단계: 취소 및 저장 버튼 이벤트 리스너 바인딩
@@ -130,6 +138,9 @@ class EditActivity : AppCompatActivity() {
         binding.btnTakeCamera.setOnClickListener {
             startCameraCapture()
         }
+
+        // 5단계: 초기 읽기 전용 상태에 따른 뷰 활성화 설정 (Task 6.3)
+        setFieldsEnabled(!isReadOnly)
     }
 
     /**
@@ -446,6 +457,48 @@ class EditActivity : AppCompatActivity() {
         }
 
         alertDialog.show()
+    }
+
+    /**
+     * 상세 조회 시 모든 텍스트 필드를 잠그고 사진/저장 버튼들을 숨기거나 편집 시 활성화함 (Task 6.3)
+     */
+    private fun setFieldsEnabled(enabled: Boolean) {
+        binding.etPlace.isEnabled = enabled
+        binding.etPlace.isFocusable = enabled
+        binding.etPlace.isFocusableInTouchMode = enabled
+
+        binding.etVisitDate.isEnabled = enabled
+        binding.etVisitDate.isClickable = enabled
+
+        binding.etMemo.isEnabled = enabled
+        binding.etMemo.isFocusable = enabled
+        binding.etMemo.isFocusableInTouchMode = enabled
+
+        binding.btnSelectGallery.visibility = if (enabled) View.VISIBLE else View.GONE
+        binding.btnTakeCamera.visibility = if (enabled) View.VISIBLE else View.GONE
+        binding.btnCancel.visibility = if (enabled) View.VISIBLE else View.GONE
+        binding.btnSave.visibility = if (enabled) View.VISIBLE else View.GONE
+    }
+
+    override fun onCreateOptionsMenu(menu: android.view.Menu?): Boolean {
+        if (isReadOnly) {
+            menuInflater.inflate(R.menu.menu_edit, menu)
+        }
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_edit_mode -> {
+                // 읽기 전용 모드에서 편집 모드로 토글 전환
+                isReadOnly = false
+                setFieldsEnabled(true)
+                binding.toolbarEdit.title = "여행 기록 수정"
+                invalidateOptionsMenu() // '수정' 메뉴 아이콘을 숨기기 위해 다시 그림
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     /**

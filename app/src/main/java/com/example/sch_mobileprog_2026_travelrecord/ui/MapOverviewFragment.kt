@@ -84,6 +84,7 @@ class MapOverviewFragment : Fragment(), OnMapReadyCallback {
             if (recordId != null) {
                 val intent = Intent(requireContext(), EditActivity::class.java).apply {
                     putExtra("no", recordId)
+                    putExtra("read_only", true)
                 }
                 startActivity(intent)
             }

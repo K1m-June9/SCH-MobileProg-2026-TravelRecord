@@ -49,6 +49,7 @@ class TravelListFragment : Fragment() {
         travelAdapter = TravelAdapter(viewLifecycleOwner.lifecycleScope) { no ->
             val intent = Intent(requireContext(), EditActivity::class.java).apply {
                 putExtra("no", no)
+                putExtra("read_only", true)
             }
             startActivity(intent)
         }
@@ -130,6 +131,7 @@ class TravelListFragment : Fragment() {
             R.id.menu_context_edit -> {
                 val intent = Intent(requireContext(), EditActivity::class.java).apply {
                     putExtra("no", no)
+                    putExtra("read_only", false)
                 }
                 startActivity(intent)
                 true
