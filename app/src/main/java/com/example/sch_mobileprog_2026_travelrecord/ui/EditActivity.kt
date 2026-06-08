@@ -3,9 +3,13 @@ package com.example.sch_mobileprog_2026_travelrecord.ui
 import android.app.DatePickerDialog
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.View
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -229,13 +233,28 @@ class EditActivity : AppCompatActivity() {
         val visitDate = binding.etVisitDate.text.toString().trim()
         val memo = binding.etMemo.text.toString().trim()
 
-        // 1단계: 필수 필드 무결성 검증
+        // 1단계: 필수 필드 무결성 검증 및 시각적 에러 피드백
+        var hasError = false
         if (place.isEmpty()) {
-            Toast.makeText(this, "여행지명을 입력해 주세요.", Toast.LENGTH_SHORT).show()
-            return
+            binding.etPlace.error = "여행지명을 입력해 주세요."
+            binding.etPlace.requestFocus()
+            hasError = true
+        } else {
+            binding.etPlace.error = null
         }
+
         if (visitDate.isEmpty()) {
-            Toast.makeText(this, "방문 날짜를 선택해 주세요.", Toast.LENGTH_SHORT).show()
+            binding.etVisitDate.error = "방문 날짜를 선택해 주세요."
+            if (!hasError) {
+                binding.etVisitDate.requestFocus()
+            }
+            hasError = true
+        } else {
+            binding.etVisitDate.error = null
+        }
+
+        if (hasError) {
+            Toast.makeText(this, "필수 입력 항목을 확인해 주세요.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -427,5 +446,24 @@ class EditActivity : AppCompatActivity() {
         }
 
         alertDialog.show()
+    }
+
+    /**
+     * 입력 폼 이외의 빈 공간을 터치했을 때 키보드를 자동으로 내리고 포커스를 해제함 (Task 6.1)
+     */
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+        if (ev?.action == MotionEvent.ACTION_DOWN) {
+            val v = currentFocus
+            if (v is EditText) {
+                val outRect = Rect()
+                v.getGlobalVisibleRect(outRect)
+                if (!outRect.contains(ev.rawX.toInt(), ev.rawY.toInt())) {
+                    v.clearFocus()
+                    val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(v.windowToken, 0)
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev)
     }
 }
