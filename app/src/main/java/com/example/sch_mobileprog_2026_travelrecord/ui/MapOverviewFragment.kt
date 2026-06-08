@@ -1,5 +1,6 @@
 package com.example.sch_mobileprog_2026_travelrecord.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -77,6 +78,17 @@ class MapOverviewFragment : Fragment(), OnMapReadyCallback {
         // 기본 지도 제어 UI 활성화 (줌인/아웃 컨트롤러 배치)
         mMap?.uiSettings?.isZoomControlsEnabled = true
 
+        // 마커 정보창(InfoWindow) 클릭 시 상세보기(EditActivity) 연동 설정 (Task 6.2)
+        mMap?.setOnInfoWindowClickListener { marker ->
+            val recordId = marker.tag as? Int
+            if (recordId != null) {
+                val intent = Intent(requireContext(), EditActivity::class.java).apply {
+                    putExtra("no", recordId)
+                }
+                startActivity(intent)
+            }
+        }
+
         // 지도가 준비된 최초 시점에 마커들을 데이터베이스에서 쿼리하여 플로팅함
         loadMarkersFromDb()
     }
@@ -105,12 +117,13 @@ class MapOverviewFragment : Fragment(), OnMapReadyCallback {
                     val lng = record.longitude
                     if (lat != null && lng != null) {
                         val latLng = LatLng(lat, lng)
-                        googleMap.addMarker(
+                        val marker = googleMap.addMarker(
                             MarkerOptions()
                                 .position(latLng)
                                 .title(record.place)
                                 .snippet(record.visitDate)
                         )
+                        marker?.tag = record.no
                         boundsBuilder.include(latLng)
                         hasValidMarkers = true
                     }
