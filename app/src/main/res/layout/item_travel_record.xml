@@ -6,6 +6,9 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="8dp"
     android:layout_marginVertical="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
     app:cardCornerRadius="12dp"
     app:cardElevation="2dp"
     app:strokeWidth="0dp">
@@ -15,17 +18,26 @@
         android:layout_height="wrap_content"
         android:padding="12dp">
 
-        <!-- 여행 대표 사진 썸네일 (기본값으로 default_image.jpg 지정) -->
-        <ImageView
-            android:id="@+id/image_thumbnail"
+        <!-- 여행 대표 사진 썸네일 카드 뷰 (8dp 코너 라운딩 적용) -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_thumbnail"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/default_image"
-            android:contentDescription="여행 대표 썸네일"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#EEEEEE"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/image_thumbnail"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/placeholder_image"
+                android:contentDescription="여행 대표 썸네일" />
+        </androidx.cardview.widget.CardView>
 
         <!-- 여행지명 -->
         <TextView
@@ -38,8 +50,8 @@
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/image_thumbnail"
-            app:layout_constraintTop_toTopOf="@id/image_thumbnail"
+            app:layout_constraintStart_toEndOf="@id/card_thumbnail"
+            app:layout_constraintTop_toTopOf="@id/card_thumbnail"
             tools:text="서울 시청" />
 
         <!-- 방문 날짜 (YYYY-MM-DD 규격) -->
@@ -50,7 +62,7 @@
             android:layout_marginTop="8dp"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorSecondary"
-            app:layout_constraintBottom_toBottomOf="@id/image_thumbnail"
+            app:layout_constraintBottom_toBottomOf="@id/card_thumbnail"
             app:layout_constraintEnd_toEndOf="@id/text_place"
             app:layout_constraintStart_toStartOf="@id/text_place"
             app:layout_constraintTop_toBottomOf="@id/text_place"
