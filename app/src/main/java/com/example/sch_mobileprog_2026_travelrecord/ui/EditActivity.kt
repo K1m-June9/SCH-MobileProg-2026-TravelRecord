@@ -17,7 +17,10 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.sch_mobileprog_2026_travelrecord.R
 import com.example.sch_mobileprog_2026_travelrecord.data.DBHelper
+import com.example.sch_mobileprog_2026_travelrecord.data.TravelRecord
 import com.example.sch_mobileprog_2026_travelrecord.databinding.ActivityEditBinding
+import com.example.sch_mobileprog_2026_travelrecord.util.FileUtil
+import com.example.sch_mobileprog_2026_travelrecord.util.LocationUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -256,9 +259,6 @@ class EditActivity : AppCompatActivity() {
 
         if (visitDate.isEmpty()) {
             binding.etVisitDate.error = "방문 날짜를 선택해 주세요."
-            if (!hasError) {
-                binding.etVisitDate.requestFocus()
-            }
             hasError = true
         } else {
             binding.etVisitDate.error = null
@@ -276,7 +276,7 @@ class EditActivity : AppCompatActivity() {
                 // 2단계: 신규 이미지가 선택되었거나 변경되었을 경우 내부 저장소로 물리 복사 실행
                 val currentUriString = selectedImageUri?.toString()
                 if (currentUriString != originalPhotoUri && selectedImageUri != null) {
-                    val copiedUri = com.example.sch_mobileprog_2026_travelrecord.util.FileUtil.copyUriToInternal(
+                    val copiedUri = FileUtil.copyUriToInternal(
                         this@EditActivity,
                         selectedImageUri!!
                     )
@@ -289,7 +289,7 @@ class EditActivity : AppCompatActivity() {
                 }
 
                 // 3단계: SQLite 저장용 TravelRecord 데이터 모델 조립
-                val record = com.example.sch_mobileprog_2026_travelrecord.data.TravelRecord(
+                val record = TravelRecord(
                     no = if (isEditMode) recordId else null,
                     place = place,
                     visitDate = visitDate,
@@ -376,7 +376,7 @@ class EditActivity : AppCompatActivity() {
             }
 
             // 2단계: 이미지 바이너리로부터 Exif GPS 좌표 비동기 추출 시도
-            val gps = com.example.sch_mobileprog_2026_travelrecord.util.LocationUtil.extractGpsCoordinates(this@EditActivity, uri)
+            val gps = LocationUtil.extractGpsCoordinates(this@EditActivity, uri)
             if (gps != null) {
                 originalLatitude = gps.first
                 originalLongitude = gps.second
