@@ -1,6 +1,7 @@
 package com.example.sch_mobileprog_2026_travelrecord.ui
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.enableEdgeToEdge
@@ -11,9 +12,14 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.fragment.app.Fragment
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
 import com.example.sch_mobileprog_2026_travelrecord.R
 import com.example.sch_mobileprog_2026_travelrecord.data.DBHelper
 import com.example.sch_mobileprog_2026_travelrecord.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -86,6 +92,9 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, EditActivity::class.java)
             startActivity(intent)
         }
+
+        // 전역 가비지 이미지 수집기 비동기 기동 (Task 6.5)
+        startGlobalGarbageCollector()
     }
 
     // 탭 선택 시 트랜잭션 최적화를 수행하고 명시적으로 백스택에 트랜잭션 상태를 기록함 (백스택 검증 방어용)
@@ -128,6 +137,74 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    /**
+     * 앱 기동 후 백그라운드 스레드에서 잉여 이미지 파일 및 cache 임시 파일을 청소하는 수집기 (Task 6.5)
+     */
+    private fun startGlobalGarbageCollector() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 1단계: Cold Start 시 UI 스레드와 I/O 경합을 피하기 위해 2초 대기 (안정성 우려 반영)
+                delay(2000)
+
+                val dbHelper = DBHelper.getInstance(this@MainActivity)
+                
+                // 2단계: DB 내 저장된 모든 유효한 photoUri 조회
+                val records = dbHelper.getAllRecords(DBHelper.SortOrder.DATE_DESC)
+                val activePhotoPaths = records.mapNotNull { record ->
+                    record.photoUri?.let { uriStr ->
+                        try {
+                            val uri = Uri.parse(uriStr)
+                            if (uri.scheme == "file") uri.path else uriStr
+                        } catch (e: Exception) {
+                            uriStr
+                        }
+                    }
+                }.toSet()
+
+                val now = System.currentTimeMillis()
+                val safetyThreshold = 5 * 60 * 1000 // 5분 안전 마진 (현재 생성 중인 파일 잠금 충돌 원천 회피)
+
+                // 3단계: filesDir 하위의 고립 이미지 정리
+                val filesDirFolder = filesDir
+                val localImageFiles = filesDirFolder.listFiles()
+                if (localImageFiles != null) {
+                    for (file in localImageFiles) {
+                        // 생성된 지 5분 이상 지난 파일만 가비지 수집 대상으로 삼음
+                        if (file.isFile && (now - file.lastModified() > safetyThreshold)) {
+                            val absolutePath = file.absolutePath
+                            // DB에 없는 파일만 삭제
+                            if (!activePhotoPaths.contains(absolutePath) && !activePhotoPaths.contains("file://$absolutePath")) {
+                                try {
+                                    file.delete()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 4단계: cacheDir 하위의 임시 촬영 찌꺼기 파일(img_temp_) 정리
+                val cacheDirFolder = cacheDir
+                val cacheFiles = cacheDirFolder.listFiles()
+                if (cacheFiles != null) {
+                    for (file in cacheFiles) {
+                        if (file.isFile && file.name.startsWith("img_temp_") && (now - file.lastModified() > safetyThreshold)) {
+                            try {
+                                file.delete()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }
