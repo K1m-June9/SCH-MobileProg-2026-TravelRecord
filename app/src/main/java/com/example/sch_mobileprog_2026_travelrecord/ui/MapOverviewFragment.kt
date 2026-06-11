@@ -169,7 +169,7 @@ class MapOverviewFragment : Fragment(), OnMapReadyCallback {
     }
 
     /**
-     * 썸네일과 화이트 말풍선 프레임을 합성하여 Toss 스타일의 커스텀 마커 비트맵을 생성함 (Task 7.3)
+     * 썸네일과 화이트 말풍선 프레임을 합성하여 커스텀 마커 비트맵을 생성함
      */
     private suspend fun createCustomMarkerBitmap(photoUriStr: String?): Bitmap? = withContext(Dispatchers.IO) {
         try {
@@ -196,7 +196,7 @@ class MapOverviewFragment : Fragment(), OnMapReadyCallback {
             path.lineTo((width / 2 + 12).toFloat(), width.toFloat())
             path.close()
 
-            // 4. 화이트 말풍선 배경 그리기 (Toss 스타일 프레임)
+            // 4. 화이트 말풍선 배경 그리기
             paint.color = android.graphics.Color.WHITE
             paint.style = Paint.Style.FILL
             canvas.drawPath(path, paint)

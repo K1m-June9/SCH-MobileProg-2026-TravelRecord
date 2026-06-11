@@ -1,12 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.SCHMobileProg2026TravelRecord" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- 다크모드에서도 브랜드 일치성을 위해 토스 블루 유지 -->
+
         <item name="colorPrimary">@color/toss_blue</item>
         <item name="colorPrimaryDark">@color/toss_blue_dark</item>
         <item name="colorAccent">@color/toss_blue</item>
         
-        <!-- 타이포그래피 제어 및 Pretendard 글로벌 폰트 지정 -->
+
         <item name="android:fontFamily">@font/pretendard</item>
         
         <item name="isLightTheme">false</item>
