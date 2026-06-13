@@ -58,13 +58,26 @@ class EditActivity : AppCompatActivity() {
     private var tempCameraFile: File? = null
     private var tempCameraUri: Uri? = null
 
+    // 수동 위치 지정 다이얼로그 및 MapView 멤버 변수 (생명주기 누수 차단용)
+    private var manualLocationDialog: androidx.appcompat.app.AlertDialog? = null
+    private var dialogMapView: MapView? = null
+
     // 갤러리 이미지 선택 결과 수신 런처
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            selectedImageUri = uri
-            displaySelectedImage(uri)
+            lifecycleScope.launch {
+                // 즉시 내부 저장소에 안전하게 물리 카피를 완료하여 임시 URI 권한 만료 방어
+                val copiedUriStr = FileUtil.copyUriToInternal(this@EditActivity, uri)
+                if (copiedUriStr != null) {
+                    val localUri = Uri.parse(copiedUriStr)
+                    selectedImageUri = localUri
+                    displaySelectedImage(localUri)
+                } else {
+                    Toast.makeText(this@EditActivity, "이미지 복사 실패", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -276,15 +289,24 @@ class EditActivity : AppCompatActivity() {
                 // 2단계: 신규 이미지가 선택되었거나 변경되었을 경우 내부 저장소로 물리 복사 실행
                 val currentUriString = selectedImageUri?.toString()
                 if (currentUriString != originalPhotoUri && selectedImageUri != null) {
-                    val copiedUri = FileUtil.copyUriToInternal(
-                        this@EditActivity,
-                        selectedImageUri!!
-                    )
-                    if (copiedUri != null) {
-                        finalPhotoUri = copiedUri
+                    // 갤러리 런처에서 이미 안전한 filesDir 로컬 파일로 복사되었는지 검증
+                    val isAlreadyInFilesDir = selectedImageUri!!.scheme == "file" &&
+                            selectedImageUri!!.path?.startsWith(filesDir.absolutePath) == true
+
+                    if (isAlreadyInFilesDir) {
+                        finalPhotoUri = currentUriString
                     } else {
-                        Toast.makeText(this@EditActivity, "이미지 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
-                        return@launch
+                        // 카메라 캡처 등 캐시 디렉토리에 존재하는 임시 파일은 filesDir로 복사
+                        val copiedUri = FileUtil.copyUriToInternal(
+                            this@EditActivity,
+                            selectedImageUri!!
+                        )
+                        if (copiedUri != null) {
+                            finalPhotoUri = copiedUri
+                        } else {
+                            Toast.makeText(this@EditActivity, "이미지 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
                     }
                 }
 
@@ -395,15 +417,18 @@ class EditActivity : AppCompatActivity() {
      * 사용자가 지도 위를 직접 터치하여 위도/경도 위치를 지정할 수 있는 수동 위치 연동 수립
      */
     private fun showManualLocationWarningDialog() {
-        // 커스텀 다이얼로그 레이아웃 인플레이션
+        // 기존 열린 다이얼로그가 있다면 먼저 리소스 안전하게 반환하고 정리
+        cleanupManualLocationDialog()
+
         val dialogView = layoutInflater.inflate(R.layout.dialog_map_selection, null)
         val mapView = dialogView.findViewById<MapView>(R.id.dialog_map_view)
+        dialogMapView = mapView
         
-        // 다이얼로그 빌더 작성 및 소환
         val alertDialog = androidx.appcompat.app.AlertDialog.Builder(this)
             .setView(dialogView)
             .setCancelable(false)
             .create()
+        manualLocationDialog = alertDialog
 
         // MapView 라이프사이클 수동 연동 제어 (메모리 누수 방지)
         mapView.onCreate(null)
@@ -438,8 +463,7 @@ class EditActivity : AppCompatActivity() {
             // 취소 시 좌표는 지정하지 않고 다이얼로그 해제
             originalLatitude = null
             originalLongitude = null
-            mapView.onDestroy()
-            alertDialog.dismiss()
+            cleanupManualLocationDialog()
         }
 
         dialogView.findViewById<View>(R.id.btn_dialog_confirm).setOnClickListener {
@@ -449,14 +473,37 @@ class EditActivity : AppCompatActivity() {
                 originalLatitude = latLng.latitude
                 originalLongitude = latLng.longitude
                 Toast.makeText(this, "선택된 위치 좌표를 연동했습니다.", Toast.LENGTH_SHORT).show()
-                mapView.onDestroy()
-                alertDialog.dismiss()
+                cleanupManualLocationDialog()
             } else {
                 Toast.makeText(this, "지도 위를 탭하여 위치 핀 마커를 표시해 주세요.", Toast.LENGTH_SHORT).show()
             }
         }
 
         alertDialog.show()
+    }
+
+    /**
+     * 수동 위치 다이얼로그 및 MapView의 메모리 누수 및 WindowLeaked 방지를 위한 안전 반환 처리
+     */
+    private fun cleanupManualLocationDialog() {
+        try {
+            dialogMapView?.onDestroy()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        dialogMapView = null
+
+        try {
+            manualLocationDialog?.dismiss()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        manualLocationDialog = null
+    }
+
+    override fun onDestroy() {
+        cleanupManualLocationDialog()
+        super.onDestroy()
     }
 
     /**

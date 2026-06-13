@@ -16,6 +16,7 @@ import com.example.sch_mobileprog_2026_travelrecord.data.DBHelper
 import com.example.sch_mobileprog_2026_travelrecord.data.TravelRecord
 import com.example.sch_mobileprog_2026_travelrecord.databinding.FragmentTravelListBinding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -30,6 +31,9 @@ class TravelListFragment : Fragment() {
 
     // 기본 정렬 순서 정의 (방문일 최신순)
     private var currentSortOrder = DBHelper.SortOrder.DATE_DESC
+
+    // 비동기 쿼리 경합 및 중복 더미 데이터 입력 방지를 위한 Job 관리 변수
+    private var dbLoadJob: kotlinx.coroutines.Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,7 +72,10 @@ class TravelListFragment : Fragment() {
      * DB 조회 작업 중에는 화면에 ProgressBar를 띄워 피드백을 주며, 데이터가 비어 있을 경우 Dummy 레코드를 주입함.
      */
     private fun loadTravelRecords() {
-        viewLifecycleOwner.lifecycleScope.launch {
+        // 이전 수행 중인 데이터 로딩 작업이 있다면 취소하여 중복 삽입 및 화면 경합 방어
+        dbLoadJob?.cancel()
+        
+        dbLoadJob = viewLifecycleOwner.lifecycleScope.launch {
             // 로딩바 노출
             binding.progressBar.visibility = View.VISIBLE
             binding.recyclerView.visibility = View.GONE
@@ -103,11 +110,16 @@ class TravelListFragment : Fragment() {
                     travelAdapter.submitList(records)
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
-                Toast.makeText(requireContext(), "데이터 로드 실패: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                // 코루틴 취소 예외인 경우 토스트 알림을 우회하여 무해하게 취소
+                if (e !is kotlinx.coroutines.CancellationException) {
+                    e.printStackTrace()
+                    Toast.makeText(requireContext(), "데이터 로드 실패: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
             } finally {
-                // 로딩바 제거
-                binding.progressBar.visibility = View.GONE
+                // 취소되지 않고 코루틴 스코프가 여전히 활성 상태인 경우에만 로딩바 해제
+                if (isActive) {
+                    binding.progressBar.visibility = View.GONE
+                }
             }
         }
     }
